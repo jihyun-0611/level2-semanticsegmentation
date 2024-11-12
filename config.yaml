@@ -1,0 +1,27 @@
+DATA:
+  IMAGE_ROOT: "/data/ephemeral/home/train/DCM"
+  LABEL_ROOT: "/data/ephemeral/home/train/outputs_json"
+  TEST_IMAGE_ROOT: "/data/ephemeral/home/test/DCM"
+  CLASSES: [
+      'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
+      'finger-6', 'finger-7', 'finger-8', 'finger-9', 'finger-10',
+      'finger-11', 'finger-12', 'finger-13', 'finger-14', 'finger-15',
+      'finger-16', 'finger-17', 'finger-18', 'finger-19', 'Trapezium',
+      'Trapezoid', 'Capitate', 'Hamate', 'Scaphoid', 'Lunate',
+      'Triquetrum', 'Pisiform', 'Radius', 'Ulna',
+  ]
+
+TRAIN:
+  BATCH_SIZE: 8
+  VAL_EVERY: 5
+  EPOCHS: 5
+  LR: 0.0001
+  RANDOM_SEED: 21
+
+MODEL:
+  SAVED_DIR: "./saved_model"
+  MODEL_NAME: "fcn_resnet50_best_model.pt"
+
+INFERENCE:
+  OUTPUT_DIR: "./inference"
+  CSV_NAME: "output.csv"
