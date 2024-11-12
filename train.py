@@ -16,7 +16,7 @@ from data.augmentation import DataTransforms
 from config.config import Config
 
 from torch.cuda.amp import autocast, GradScaler
-import json
+import segmentation_models_pytorch as smp
 
 config = Config('config.yaml')
 
@@ -137,9 +137,14 @@ def main():
     )
 
 
-    model = models.segmentation.fcn_resnet50(pretrained=True)
-    model.classifier[4] = nn.Conv2d(512, len(config.DATA.CLASSES), kernel_size=1)
-
+    # model 불러오기
+    # 출력 label 수 정의 (classes=29)
+    model = smp.Unet(
+        encoder_name="efficientnet-b0", # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+        encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+        in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+        classes=29,                     # model output channels (number of classes in your dataset)
+    )
 
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(params=model.parameters(), lr=config.TRAIN.LR, weight_decay=1e-6)

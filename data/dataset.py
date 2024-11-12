@@ -70,11 +70,8 @@ class XRayDataset(Dataset):
         self.labelnames = labelnames
 
         # .npy 파일이 존재하지 않으면 미리 생성합니다.
-        count = 0 # 이거 나중에 삭제 쫌요
         if use_pickle:
             for image_name, label_name in zip(self.filenames, self.labelnames):
-                print(count)
-                count += 1 # 이것도요
                 # npy_path = os.path.join(self.pickle_dir, f"{os.path.basename(image_name)}.npy")
                 image_npy_path = os.path.join(self.pickle_dir, f"{os.path.basename(image_name)}_image.npz")
                 label_npy_path = os.path.join(self.pickle_dir, f"{os.path.basename(image_name)}_label.npz")
