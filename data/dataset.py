@@ -13,7 +13,13 @@ CLASS2IND = {v: i for i, v in enumerate(config.DATA.CLASSES)}
 IND2CLASS = {v: k for k, v in CLASS2IND.items()}
 
 class XRayDataset(Dataset):
-    def __init__(self, is_train=True, transforms=None):
+    def __init__(self, is_train=True, transforms=None, use_pickle=True, pickle_dir="/data/ephemeral/home/data/pickle_data"):
+        self.is_train = is_train
+        self.transforms = transforms
+        self.use_pickle = use_pickle
+        self.pickle_dir = pickle_dir
+        os.makedirs(self.pickle_dir, exist_ok=True)  # npy 저장 폴더 생성
+        
         pngs = {
             os.path.relpath(os.path.join(root, fname), start=config.DATA.IMAGE_ROOT)
             for root, _dirs, files in os.walk(config.DATA.IMAGE_ROOT)
@@ -38,16 +44,8 @@ class XRayDataset(Dataset):
         _labelnames = np.array(sorted(jsons))
         
         # split train-valid
-        # 한 폴더 안에 한 인물의 양손에 대한 `.dcm` 파일이 존재하기 때문에
-        # 폴더 이름을 그룹으로 해서 GroupKFold를 수행합니다.
-        # 동일 인물의 손이 train, valid에 따로 들어가는 것을 방지합니다.
         groups = [os.path.dirname(fname) for fname in _filenames]
-        
-        # dummy label
         ys = [0 for fname in _filenames]
-        
-        # 전체 데이터의 20%를 validation data로 쓰기 위해 `n_splits`를
-        # 5으로 설정하여 KFold를 수행합니다.
         gkf = GroupKFold(n_splits=5)
         
         filenames = []
@@ -67,59 +65,74 @@ class XRayDataset(Dataset):
                 
                 # skip i > 0
                 break
-        
+
         self.filenames = filenames
         self.labelnames = labelnames
-        self.is_train = is_train
-        self.transforms = transforms
+
+        # .npy 파일이 존재하지 않으면 미리 생성합니다.
+        count = 0 # 이거 나중에 삭제 쫌요
+        if use_pickle:
+            for image_name, label_name in zip(self.filenames, self.labelnames):
+                print(count)
+                count += 1 # 이것도요
+                # npy_path = os.path.join(self.pickle_dir, f"{os.path.basename(image_name)}.npy")
+                image_npy_path = os.path.join(self.pickle_dir, f"{os.path.basename(image_name)}_image.npz")
+                label_npy_path = os.path.join(self.pickle_dir, f"{os.path.basename(image_name)}_label.npz")
+                if not os.path.exists(image_npy_path):
+                    data = self._create_data(image_name, label_name)
+                    np.savez_compressed(image_npy_path, data[0]) 
+                    np.savez_compressed(label_npy_path, data[1])  # npy 파일로 저장
     
+    def _create_data(self, image_name, label_name):
+        """이미지와 레이블 데이터를 생성해 반환합니다."""
+        image_path = os.path.join(config.IMAGE_ROOT, image_name)
+        image = cv2.imread(image_path)
+        image = image / 255.0
+
+        label_path = os.path.join(config.LABEL_ROOT, label_name)
+        label_shape = tuple(image.shape[:2]) + (len(config.CLASSES), )
+        label = np.zeros(label_shape, dtype=np.uint8)
+        
+        with open(label_path, "r") as f:
+            annotations = json.load(f)["annotations"]
+            
+        for ann in annotations:
+            c = ann["label"]
+            class_ind = CLASS2IND[c]
+            points = np.array(ann["points"])
+            class_label = np.zeros(image.shape[:2], dtype=np.uint8)
+            cv2.fillPoly(class_label, [points], 1)
+            label[..., class_ind] = class_label
+
+        return image, label
+
     def __len__(self):
         return len(self.filenames)
     
     def __getitem__(self, item):
         image_name = self.filenames[item]
-        image_path = os.path.join(config.DATA.IMAGE_ROOT, image_name)
-        
-        image = cv2.imread(image_path)
-        image = image / 255.
-        
-        label_name = self.labelnames[item]
-        label_path = os.path.join(config.DATA.LABEL_ROOT, label_name)
-        
-        # (H, W, NC) 모양의 label을 생성합니다.
-        label_shape = tuple(image.shape[:2]) + (len(config.DATA.CLASSES), )
-        label = np.zeros(label_shape, dtype=np.uint8)
-        
-        # label 파일을 읽습니다.
-        with open(label_path, "r") as f:
-            annotations = json.load(f)
-        annotations = annotations["annotations"]
-        
-        # 클래스 별로 처리합니다.
-        for ann in annotations:
-            c = ann["label"]
-            class_ind = CLASS2IND[c]
-            points = np.array(ann["points"])
-            
-            # polygon 포맷을 dense한 mask 포맷으로 바꿉니다.
-            class_label = np.zeros(image.shape[:2], dtype=np.uint8)
-            cv2.fillPoly(class_label, [points], 1)
-            label[..., class_ind] = class_label
-        
+
+        # npy_path = os.path.join(self.pickle_dir, f"{os.path.basename(image_name)}.npy")
+        image_npy_path = os.path.join(self.pickle_dir, f"{os.path.basename(image_name)}_image.npz")
+        label_npy_path = os.path.join(self.pickle_dir, f"{os.path.basename(image_name)}_label.npz")
+
+        # .npy에서 이미지와 레이블 불러오기
+        image = np.load(image_npy_path, allow_pickle=True)['arr_0']
+        label = np.load(label_npy_path, allow_pickle=True)['arr_0']
+
         if self.transforms is not None:
             inputs = {"image": image, "mask": label} if self.is_train else {"image": image}
             result = self.transforms(**inputs)
-            
             image = result["image"]
             label = result["mask"] if self.is_train else label
 
-        # to tenser will be done later
-        image = image.transpose(2, 0, 1)    # channel first 포맷으로 변경합니다.
+        # channel first 포맷으로 변경
+        image = image.transpose(2, 0, 1)
         label = label.transpose(2, 0, 1)
-        
+
         image = torch.from_numpy(image).float()
         label = torch.from_numpy(label).float()
-            
+
         return image, label
 
 class XRayInferenceDataset(Dataset):
