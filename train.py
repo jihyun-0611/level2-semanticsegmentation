@@ -66,6 +66,7 @@ def train(model, data_loader, val_loader, criterion, optimizer):
     print(f'Start training..')
     
     best_dice = 0.
+    scaler = GradScaler()
     
     for epoch in range(config.TRAIN.EPOCHS):
         model.train()
@@ -79,9 +80,11 @@ def train(model, data_loader, val_loader, criterion, optimizer):
             
             # loss를 계산합니다.
             loss = criterion(outputs, masks)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+        
             
             # step 주기에 따라 loss를 출력합니다.
             if (step + 1) % 25 == 0:
