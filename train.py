@@ -43,8 +43,8 @@ def validation(epoch, model, data_loader, criterion, thr=0.5):
             cnt += 1
             
             outputs = torch.sigmoid(outputs)
-            outputs = (outputs > thr).detach().cpu()
-            masks = masks.detach().cpu()
+            outputs = (outputs > thr)
+
             
             dice = dice_coef(outputs, masks)
             dices.append(dice)
