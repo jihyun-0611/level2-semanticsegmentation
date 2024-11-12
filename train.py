@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from torch.nn import functional as F
 import torchvision.models as models
 import torch.optim as optim
+import torch.optim.lr_scheduler as lr_scheduler
 from tqdm import tqdm
 
 from utils.utils import set_seed, save_model
@@ -13,6 +14,9 @@ from data.dataset import XRayDataset
 from data.augmentation import DataTransforms
 
 from config.config import Config
+
+from torch.cuda.amp import autocast, GradScaler
+import json
 
 config = Config('config.yaml')
 
@@ -29,7 +33,7 @@ def validation(epoch, model, data_loader, criterion, thr=0.5):
             images, masks = images.cuda(), masks.cuda()         
             model = model.cuda()
             
-            outputs = model(images)['out']
+            outputs = model(images)
             
             output_h, output_w = outputs.size(-2), outputs.size(-1)
             mask_h, mask_w = masks.size(-2), masks.size(-1)
@@ -62,7 +66,7 @@ def validation(epoch, model, data_loader, criterion, thr=0.5):
     
     return avg_dice
 
-def train(model, data_loader, val_loader, criterion, optimizer):
+def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
     print(f'Start training..')
     
     best_dice = 0.
@@ -75,11 +79,12 @@ def train(model, data_loader, val_loader, criterion, optimizer):
             # gpu 연산을 위해 device 할당합니다.
             images, masks = images.cuda(), masks.cuda()
             model = model.cuda()
-            
-            outputs = model(images)['out']
-            
-            # loss를 계산합니다.
-            loss = criterion(outputs, masks)
+
+            optimizer.zero_grad()
+
+            with autocast():
+                outputs = model(images)
+                loss = criterion(outputs, masks)
 
             scaler.scale(loss).backward()
             scaler.step(optimizer)
@@ -94,7 +99,10 @@ def train(model, data_loader, val_loader, criterion, optimizer):
                     f'Step [{step+1}/{len(data_loader)}], '
                     f'Loss: {round(loss.item(),4)}'
                 )
-             
+        scheduler.step()
+        current_lr = scheduler.get_last_lr()[0]  # 첫 번째 학습률을 가져옵니다.
+        print(f'Epoch [{epoch+1}/{config.TRAIN.EPOCHS}] | Learning Rate: {current_lr}') 
+
         # validation 주기에 따라 loss를 출력하고 best model을 저장합니다.
         if (epoch + 1) % config.TRAIN.VAL_EVERY == 0:
             dice = validation(epoch + 1, model, val_loader, criterion)
@@ -122,11 +130,12 @@ def main():
     
     valid_loader = DataLoader(
         dataset=valid_dataset, 
-        batch_size=8,
+        batch_size=4,
         shuffle=False,
         num_workers=0,
         drop_last=False
     )
+
 
     model = models.segmentation.fcn_resnet50(pretrained=True)
     model.classifier[4] = nn.Conv2d(512, len(config.DATA.CLASSES), kernel_size=1)
@@ -134,10 +143,11 @@ def main():
 
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(params=model.parameters(), lr=config.TRAIN.LR, weight_decay=1e-6)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
     
     # 학습 시작
     set_seed(config)
-    train(model, train_loader, valid_loader, criterion, optimizer)
+    train(model, train_loader, valid_loader, criterion, optimizer, scheduler)
 
 if __name__ == '__main__':
     main()
