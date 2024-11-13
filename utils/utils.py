@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import random
 import os
+import wandb
 
 def set_seed(config):
     torch.manual_seed(config.TRAIN.RANDOM_SEED)
@@ -17,3 +18,10 @@ def save_model(config, model):
     if not os.path.exists(config.MODEL.SAVED_DIR):
         os.makedirs(config.MODEL.SAVED_DIR)
     torch.save(model, output_path)
+
+def wandb_model_log(config):
+    model_path = os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
+    wandb.save(model_path)
+    artifact = wandb.Artifact(name=f"{config.MODEL.MODEL_NAME}", type="model")
+    artifact.add_file(model_path)
+    wandb.log_artifact(artifact)
