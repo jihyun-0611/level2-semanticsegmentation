@@ -170,8 +170,8 @@ def main():
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(params=model.parameters(), lr=config.TRAIN.LR, weight_decay=1e-6)
     scheduler = lr_scheduler.StepLR(optimizer, 
-                                    step_size=config.TRAIN.SCHEDULER.STEP_SIZE, 
-                                    gamma=config.TRAIN.SCHEDULER.GAMMA)
+                                    step_size=100, 
+                                    gamma=0.1)
 
     # 학습 시작
     set_seed(config)

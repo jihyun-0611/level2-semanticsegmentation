@@ -18,11 +18,6 @@ TRAIN: &train_settings
   LR: 0.0001
   RANDOM_SEED: 21 # 랜덤 시드
   FP16: True # FP16 사용 여부
-  SCHEDULER:
-    TYPE: "StepLR" # 현재 버전에서 가능한 스케쥴러는 PR 참고
-    STEP_SIZE: 15 # 스케쥴러 타입에 따라 필요한 파라미터 추가
-    GAMMA: 0.1  # 스케쥴러 타입에 따라 필요한 파라미터 추가
-
 
 MODEL:
   SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
