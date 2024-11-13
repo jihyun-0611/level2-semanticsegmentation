@@ -10,6 +10,8 @@ from data.dataset import XRayInferenceDataset, IND2CLASS
 from utils.metrics import encode_mask_to_rle
 from data.augmentation import DataTransforms
 
+import segmentation_models_pytorch as smp
+
 config = Config('config.yaml')
 
 def test(model, data_loader, thr=0.5):
@@ -36,7 +38,14 @@ def test(model, data_loader, thr=0.5):
     return rles, filename_and_class
 
 def main():
-    model = torch.load(os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME))
+    model = smp.Unet(
+        encoder_name="efficientnet-b0", # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+        encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+        in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+        classes=29,                     # model output channels (number of classes in your dataset)
+    )
+    model_path=os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
+    model.load_state_dict(torch.load(model_path))
     
     tf = DataTransforms.get_transforms("valid")
 

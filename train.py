@@ -57,6 +57,9 @@ def validation(epoch, model, data_loader, criterion, thr=0.5):
                 
     dices = torch.cat(dices, 0)
     dices_per_class = torch.mean(dices, 0)
+    
+    dice_dict = {f"val/{c}": d.item() for c, d in zip(config.DATA.CLASSES, dices_per_class)}
+    
     dice_str = [
         f"{c:<12}: {d.item():.4f}"
         for c, d in zip(config.DATA.CLASSES, dices_per_class)
@@ -66,7 +69,7 @@ def validation(epoch, model, data_loader, criterion, thr=0.5):
     
     avg_dice = torch.mean(dices_per_class).item()
     
-    return avg_dice
+    return avg_dice, dice_dict
 
 def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
     run = wandb.init(
@@ -77,6 +80,7 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
         tags=config.WANDB.TAGS, 
         config=config.WANDB.CONFIGS
     )
+    wandb.watch(model, criterion, log="all", log_freq=5*len(data_loader))
     
     print(f'Start training..')
     
@@ -110,7 +114,7 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
                     f'Step [{step+1}/{len(data_loader)}], '
                     f'Loss: {round(loss.item(),4)}'
                 )
-                wandb.log({"loss": round(loss.item(),4)})
+                wandb.log({"train/loss": round(loss.item(),4)})
                 
         scheduler.step()
         current_lr = scheduler.get_last_lr()[0]  # 첫 번째 학습률을 가져옵니다.
@@ -118,8 +122,8 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
 
         # validation 주기에 따라 loss를 출력하고 best model을 저장합니다.
         if (epoch + 1) % config.TRAIN.VAL_EVERY == 0:
-            dice = validation(epoch + 1, model, val_loader, criterion)
-            wandb.log({"dice": dice})
+            dice, class_dices = validation(epoch + 1, model, val_loader, criterion)
+            wandb.log({"val/avg_dice": dice, **class_dices})
             
             if best_dice < dice:
                 print(f"Best performance at epoch: {epoch + 1}, {best_dice:.4f} -> {dice:.4f}")

@@ -14,7 +14,7 @@ DATA:
 TRAIN: &train_settings
   BATCH_SIZE: 8
   VAL_EVERY: 5
-  EPOCHS: 5
+  EPOCHS: 30
   LR: 0.0001
   RANDOM_SEED: 21
 
@@ -29,7 +29,7 @@ INFERENCE:
 WANDB:
   PROJECT_NAME: "semantic-segmentation"
   ENTITY: "lv2-ss-"
-  RUN_NAME: "fcn_resnet50" # 실험 이름 바꿔줘요 아티팩트 저장때문에 바꿔야함요
+  RUN_NAME: "baseline" # 실험 이름 바꿔줘요.
   NOTES: "train with wandb" # 특이사항 혹은 tag로 설명이 안되면 추가해주시면 됩니다. 
   TAGS: ["fcn", "resnet50"]
   CONFIGS: *train_settings
