@@ -6,7 +6,7 @@ from tqdm import tqdm
 import os
 
 from config.config import Config
-from data.dataset import XRayInferenceDataset, IND2CLASS
+from data.dataset import XRayInferenceDataset
 from utils.metrics import encode_mask_to_rle
 from data.augmentation import DataTransforms
 
@@ -33,7 +33,7 @@ def test(model, data_loader, thr=0.5):
                 for c, segm in enumerate(output):
                     rle = encode_mask_to_rle(segm)
                     rles.append(rle)
-                    filename_and_class.append(f"{IND2CLASS[c]}_{image_name}")
+                    filename_and_class.append(f"{data_loader.dataset.IND2CLASS[c]}_{image_name}")
                     
     return rles, filename_and_class
 
@@ -49,7 +49,7 @@ def main():
     
     tf = DataTransforms.get_transforms("valid")
 
-    test_dataset = XRayInferenceDataset(transforms=tf)
+    test_dataset = XRayInferenceDataset(transforms=tf, config=config)
     test_loader = DataLoader(
     dataset=test_dataset, 
     batch_size=2,

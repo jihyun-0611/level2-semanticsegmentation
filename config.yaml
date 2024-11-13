@@ -1,7 +1,7 @@
 DATA:
-  IMAGE_ROOT: "/data/ephemeral/home/data/train/DCM"
-  LABEL_ROOT: "/data/ephemeral/home/data/train/outputs_json"
-  TEST_IMAGE_ROOT: "/data/ephemeral/home/data/test/DCM"
+  IMAGE_ROOT: "/data/ephemeral/home/data/train/DCM" # 학습 이미지 디렉토리 경로
+  LABEL_ROOT: "/data/ephemeral/home/data/train/outputs_json" # 학습 json 디렉토리 경로
+  TEST_IMAGE_ROOT: "/data/ephemeral/home/data/test/DCM" # 테스트 이미지 디렉토리 경로
   CLASSES: [
       'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
       'finger-6', 'finger-7', 'finger-8', 'finger-9', 'finger-10',
@@ -16,15 +16,21 @@ TRAIN: &train_settings
   VAL_EVERY: 5
   EPOCHS: 30
   LR: 0.0001
-  RANDOM_SEED: 21
+  RANDOM_SEED: 21 # 랜덤 시드
+  FP16: True # FP16 사용 여부
+  SCHEDULER:
+    TYPE: "StepLR" # 현재 버전에서 가능한 스케쥴러는 PR 참고
+    STEP_SIZE: 3 # 스케쥴러 타입에 따라 필요한 파라미터 추가
+    GAMMA: 0.1  # 스케쥴러 타입에 따라 필요한 파라미터 추가
+
 
 MODEL:
-  SAVED_DIR: "./saved_model"
-  MODEL_NAME: "fcn_resnet50_best_model.pt"
+  SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
+  MODEL_NAME: "fcn_resnet50_best_model.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
 
 INFERENCE:
-  OUTPUT_DIR: "./inference"
-  CSV_NAME: "output.csv"
+  OUTPUT_DIR: "./inference" # 추론 결과 저장 디렉토리
+  CSV_NAME: "output.csv" # 추론 결과 저장 파일 이름
 
 WANDB:
   PROJECT_NAME: "semantic-segmentation"
