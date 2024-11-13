@@ -82,12 +82,12 @@ class XRayDataset(Dataset):
     
     def _create_data(self, image_name, label_name):
         """이미지와 레이블 데이터를 생성해 반환합니다."""
-        image_path = os.path.join(config.IMAGE_ROOT, image_name)
+        image_path = os.path.join(config.DATA.IMAGE_ROOT, image_name)
         image = cv2.imread(image_path)
         image = image / 255.0
 
-        label_path = os.path.join(config.LABEL_ROOT, label_name)
-        label_shape = tuple(image.shape[:2]) + (len(config.CLASSES), )
+        label_path = os.path.join(config.DATA.LABEL_ROOT, label_name)
+        label_shape = tuple(image.shape[:2]) + (len(config.DATA.CLASSES), )
         label = np.zeros(label_shape, dtype=np.uint8)
         
         with open(label_path, "r") as f:
