@@ -81,7 +81,7 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
         tags=config.WANDB.TAGS, 
         config=config.WANDB.CONFIGS
     )
-    wandb.watch(model, criterion, log="all", log_freq=5*len(data_loader))
+    wandb.watch(model, criterion, log="all", log_freq=config.WANDB.WATCH_STEP*len(data_loader))
     
     print(f'Start training..')
     
