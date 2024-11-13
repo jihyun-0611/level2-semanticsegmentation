@@ -77,7 +77,7 @@ def validation(epoch, model, data_loader, criterion, thr=0.5, save_csv=False):
                         classes.append(IND2CLASS[c])
                         filenames.append(image_name)
             ################################################################################################
-    
+        print('val total loss: ', (total_loss/cnt))
     ########################################################################################################        
     # 모든 스텝의 결과를 하나의 CSV 파일로 저장
     if save_csv:
@@ -134,6 +134,8 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
     
     for epoch in range(config.TRAIN.EPOCHS):
         model.train()
+        current_lr = scheduler.get_last_lr()[0]  # 첫 번째 학습률을 가져옵니다.
+        print(f'Epoch [{epoch+1}/{config.TRAIN.EPOCHS}] | Learning Rate: {current_lr}') 
 
         for step, (images, masks) in enumerate(data_loader):            
             images, masks = images.cuda(), masks.cuda()
@@ -168,8 +170,7 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
                 wandb.log({"train/loss": round(loss.item(),4)})
                 
         scheduler.step()
-        current_lr = scheduler.get_last_lr()[0]  # 첫 번째 학습률을 가져옵니다.
-        print(f'Epoch [{epoch+1}/{config.TRAIN.EPOCHS}] | Learning Rate: {current_lr}') 
+        
 
         ###########################################################################
         # 마지막 epoch에서만 PDF 저장을 활성화하여 validation 호출
