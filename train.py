@@ -7,9 +7,11 @@ import torchvision.models as models
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from tqdm import tqdm
+import pandas as pd
+import os
 
 from utils.utils import set_seed, save_model, wandb_model_log
-from utils.metrics import dice_coef
+from utils.metrics import dice_coef, encode_mask_to_rle
 from data.dataset import XRayDataset
 from data.augmentation import DataTransforms
 from models import *
@@ -23,11 +25,17 @@ import wandb
 
 config = Config('config.yaml')
 
-def validation(epoch, model, data_loader, criterion, thr=0.5):
+CLASS2IND = {v: i for i, v in enumerate(config.DATA.CLASSES)}
+IND2CLASS = {v: k for k, v in CLASS2IND.items()}
+
+def validation(epoch, model, data_loader, criterion, thr=0.5, save_csv=False):
     print(f'Start validation #{epoch:2d}')
     model.eval()
 
     dices = []
+    rles = []
+    classes = []
+    filenames = []
     with torch.no_grad():
         total_loss = 0
         cnt = 0
@@ -55,6 +63,41 @@ def validation(epoch, model, data_loader, criterion, thr=0.5):
             
             dice = dice_coef(outputs, masks)
             dices.append(dice)
+            
+            ###############################################################################################
+            # save validation outputs in list
+            if save_csv:
+                dataset = data_loader.dataset
+                batch_filenames = [dataset.filenames[i] for i in range(step * data_loader.batch_size, (step + 1) * data_loader.batch_size)]
+                
+                for output, image_name in zip(outputs, batch_filenames):
+                    for c, segm in enumerate(output):
+                        rle = encode_mask_to_rle(segm.cpu())
+                        rles.append(rle)
+                        classes.append(IND2CLASS[c])
+                        filenames.append(image_name)
+            ################################################################################################
+    
+    ########################################################################################################        
+    # 모든 스텝의 결과를 하나의 CSV 파일로 저장
+    if save_csv:
+        image_name = [os.path.basename(f) for f in filenames]
+        os.makedirs(config.TRAIN.OUTPUT_DIR, exist_ok=True)
+    
+        output_path = os.path.join(
+            config.TRAIN.OUTPUT_DIR,
+            config.TRAIN.CSV_NAME
+        )
+
+        df = pd.DataFrame({
+            "image_name": image_name,
+            "class": classes,
+            "rle": rles,
+        })
+
+        df.to_csv(output_path, index=False)
+        print(f"Validation Results saved to {output_path}")
+    ########################################################################################################
                 
     dices = torch.cat(dices, 0)
     dices_per_class = torch.mean(dices, 0)
@@ -128,6 +171,9 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
         current_lr = scheduler.get_last_lr()[0]  # 첫 번째 학습률을 가져옵니다.
         print(f'Epoch [{epoch+1}/{config.TRAIN.EPOCHS}] | Learning Rate: {current_lr}') 
 
+        ###########################################################################
+        # 마지막 epoch에서만 PDF 저장을 활성화하여 validation 호출
+        save_csv = (epoch + 1 == config.TRAIN.EPOCHS)
         # validation 주기에 따라 loss를 출력하고 best model을 저장합니다.
         if (epoch + 1) % config.TRAIN.VAL_EVERY == 0:
             dice, class_dices, val_loss = validation(epoch + 1, model, val_loader, criterion)
