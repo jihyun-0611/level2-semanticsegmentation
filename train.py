@@ -78,6 +78,7 @@ def validation(epoch, model, data_loader, criterion, thr=0.5, save_csv=False):
                         filenames.append(image_name)
             ################################################################################################
         print('val total loss: ', (total_loss/cnt))
+        wandb.log({"val/loss": total_loss/cnt})
     ########################################################################################################        
     # 모든 스텝의 결과를 하나의 CSV 파일로 저장
     if save_csv:
@@ -112,9 +113,8 @@ def validation(epoch, model, data_loader, criterion, thr=0.5, save_csv=False):
     print(dice_str)
     
     avg_dice = torch.mean(dices_per_class).item()
-    val_loss = total_loss / cnt
     
-    return avg_dice, dice_dict, val_loss
+    return avg_dice, dice_dict
 
 def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
     run = wandb.init(
@@ -167,7 +167,7 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
                     f'Step [{step+1}/{len(data_loader)}], '
                     f'Loss: {round(loss.item(),4)}'
                 )
-                wandb.log({"train/loss": round(loss.item(),4)})
+                wandb.log({"train/loss": round(loss.item(),4), "lr": current_lr, "epoch": epoch+1})
                 
         scheduler.step()
         
@@ -177,8 +177,8 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
         save_csv = (epoch + 1 == config.TRAIN.EPOCHS)
         # validation 주기에 따라 loss를 출력하고 best model을 저장합니다.
         if (epoch + 1) % config.TRAIN.VAL_EVERY == 0:
-            dice, class_dices, val_loss = validation(epoch + 1, model, val_loader, criterion)
-            wandb.log({"val/avg_dice": dice, **class_dices, "val/loss": val_loss})
+            dice, class_dices = validation(epoch + 1, model, val_loader, criterion)
+            wandb.log({"val/avg_dice": dice, **class_dices})
             
             if best_dice < dice:
                 print(f"Best performance at epoch: {epoch + 1}, {best_dice:.4f} -> {dice:.4f}")
