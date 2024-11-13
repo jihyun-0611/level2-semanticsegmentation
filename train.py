@@ -8,7 +8,7 @@ import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from tqdm import tqdm
 
-from utils.utils import set_seed, save_model
+from utils.utils import set_seed, save_model, wandb_model_log
 from utils.metrics import dice_coef
 from data.dataset import XRayDataset
 from data.augmentation import DataTransforms
@@ -17,6 +17,8 @@ from config.config import Config
 
 from torch.cuda.amp import autocast, GradScaler
 import segmentation_models_pytorch as smp
+
+import wandb
 
 config = Config('config.yaml')
 
@@ -67,6 +69,15 @@ def validation(epoch, model, data_loader, criterion, thr=0.5):
     return avg_dice
 
 def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
+    run = wandb.init(
+        project=config.WANDB.PROJECT_NAME,
+        entity=config.WANDB.ENTITY, 
+        name=config.WANDB.RUN_NAME, 
+        notes=config.WANDB.NOTES, 
+        tags=config.WANDB.TAGS, 
+        config=config.WANDB.CONFIGS
+    )
+    
     print(f'Start training..')
     
     best_dice = 0.
@@ -99,6 +110,8 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
                     f'Step [{step+1}/{len(data_loader)}], '
                     f'Loss: {round(loss.item(),4)}'
                 )
+                wandb.log({"loss": round(loss.item(),4)})
+                
         scheduler.step()
         current_lr = scheduler.get_last_lr()[0]  # 첫 번째 학습률을 가져옵니다.
         print(f'Epoch [{epoch+1}/{config.TRAIN.EPOCHS}] | Learning Rate: {current_lr}') 
@@ -106,13 +119,16 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
         # validation 주기에 따라 loss를 출력하고 best model을 저장합니다.
         if (epoch + 1) % config.TRAIN.VAL_EVERY == 0:
             dice = validation(epoch + 1, model, val_loader, criterion)
+            wandb.log({"dice": dice})
             
             if best_dice < dice:
                 print(f"Best performance at epoch: {epoch + 1}, {best_dice:.4f} -> {dice:.4f}")
                 print(f"Save model in {config.MODEL.SAVED_DIR}")
                 best_dice = dice
                 save_model(config, model)
-
+                wandb_model_log(config)
+    wandb.finish()
+    
 def main():
     tf_train = DataTransforms.get_transforms("train")
     tf_valid = DataTransforms.get_transforms("valid")
