@@ -5,7 +5,7 @@ class UNet(BaseModel):
     def __init__(self):
         super(UNet, self).__init__()
         self.model = smp.Unet(encoder_name="efficientnet-b0", 
-                              encoder_weights="imagenet", 
+                              encoder_weights=None, 
                               in_channels=3, 
                               classes=29)
 

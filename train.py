@@ -69,8 +69,9 @@ def validation(epoch, model, data_loader, criterion, thr=0.5):
     print(dice_str)
     
     avg_dice = torch.mean(dices_per_class).item()
+    val_loss = total_loss / cnt
     
-    return avg_dice, dice_dict
+    return avg_dice, dice_dict, val_loss
 
 def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
     run = wandb.init(
@@ -129,8 +130,8 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
 
         # validation 주기에 따라 loss를 출력하고 best model을 저장합니다.
         if (epoch + 1) % config.TRAIN.VAL_EVERY == 0:
-            dice, class_dices = validation(epoch + 1, model, val_loader, criterion)
-            wandb.log({"val/avg_dice": dice, **class_dices})
+            dice, class_dices, val_loss = validation(epoch + 1, model, val_loader, criterion)
+            wandb.log({"val/avg_dice": dice, **class_dices, "val/loss": val_loss})
             
             if best_dice < dice:
                 print(f"Best performance at epoch: {epoch + 1}, {best_dice:.4f} -> {dice:.4f}")
@@ -168,7 +169,7 @@ def main():
     model = UNet()
 
     criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(params=model.parameters(), lr=config.TRAIN.LR, weight_decay=1e-6)
+    optimizer = optim.AdamW(params=model.parameters(), lr=config.TRAIN.LR, weight_decay=1e-2)
     scheduler = lr_scheduler.StepLR(optimizer, 
                                     step_size=100, 
                                     gamma=0.1)
