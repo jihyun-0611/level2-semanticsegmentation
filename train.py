@@ -12,6 +12,7 @@ from utils.utils import set_seed, save_model, wandb_model_log
 from utils.metrics import dice_coef
 from data.dataset import XRayDataset
 from data.augmentation import DataTransforms
+from models import *
 
 from config.config import Config
 
@@ -161,12 +162,7 @@ def main():
 
     # model 불러오기
     # 출력 label 수 정의 (classes=29)
-    model = smp.Unet(
-        encoder_name="efficientnet-b0", # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
-        encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
-        in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
-        classes=29,                     # model output channels (number of classes in your dataset)
-    )
+    model = UNet()
 
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(params=model.parameters(), lr=config.TRAIN.LR, weight_decay=1e-6)
