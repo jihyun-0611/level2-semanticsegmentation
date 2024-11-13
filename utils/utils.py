@@ -13,7 +13,7 @@ def set_seed(config):
     random.seed(config.TRAIN.RANDOM_SEED)
 
 def save_model(config, model):
-    output_path = os.path.join(config.MODEL.SAVED_DIR, config.MODEL.FILE_NAME)
+    output_path = os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
     if not os.path.exists(config.MODEL.SAVED_DIR):
         os.makedirs(config.MODEL.SAVED_DIR)
     torch.save(model, output_path)
