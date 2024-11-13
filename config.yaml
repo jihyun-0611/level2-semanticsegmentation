@@ -15,7 +15,7 @@ TRAIN: &train_settings
   BATCH_SIZE: 8
   VAL_EVERY: 5
   EPOCHS: 30
-  LR: 0.0001
+  LR: 0.005
   RANDOM_SEED: 21 # 랜덤 시드
   FP16: True # FP16 사용 여부
   OUTPUT_DIR: "./train"
@@ -23,17 +23,17 @@ TRAIN: &train_settings
 
 MODEL:
   SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
-  MODEL_NAME: "UNet_None_best_model.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
+  MODEL_NAME: "UNet_None_AdamW_best_model.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
 
 INFERENCE:
   OUTPUT_DIR: "./inference" # 추론 결과 저장 디렉토리
-  CSV_NAME: "UNet_None_output.csv" # 추론 결과 저장 파일 이름
+  CSV_NAME: "UNet_None_AdamW_output.csv" # 추론 결과 저장 파일 이름
 
 WANDB:
   PROJECT_NAME: "semantic-segmentation"
   ENTITY: "lv2-ss-"
-  RUN_NAME: "UNet_encoder_weights_None" # 실험 이름 바꿔줘요.
-  NOTES: "train baseline (UNet) with encoder weights None" # 특이사항 혹은 tag로 설명이 안되면 추가해주시면 됩니다. 
-  TAGS: ["UNet", "efficientnet-b0", "weights: None"]
+  RUN_NAME: "UNet_weights_None_AdamW" # 실험 이름 바꿔줘요.
+  NOTES: "train baseline (UNet) with encoder weights None and lr 0.005" # 특이사항 혹은 tag로 설명이 안되면 추가해주시면 됩니다. 
+  TAGS: ["UNet", "efficientnet-b0", "weights: None", "AdamW"]
   CONFIGS: *train_settings
   WATCH_STEP: 5 # 5 epoch마다 wandb에 gradients/parameters 시각화
