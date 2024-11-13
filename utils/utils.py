@@ -17,7 +17,7 @@ def save_model(config, model):
     output_path = os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
     if not os.path.exists(config.MODEL.SAVED_DIR):
         os.makedirs(config.MODEL.SAVED_DIR)
-    torch.save(model, output_path)
+    torch.save(model.state_dict(), output_path)
 
 def wandb_model_log(config):
     model_path = os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)

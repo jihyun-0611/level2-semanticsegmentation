@@ -10,6 +10,10 @@ from data.dataset import XRayInferenceDataset
 from utils.metrics import encode_mask_to_rle
 from data.augmentation import DataTransforms
 
+import segmentation_models_pytorch as smp
+
+from models import *
+
 config = Config('config.yaml')
 
 def test(model, data_loader, thr=0.5):
@@ -21,7 +25,7 @@ def test(model, data_loader, thr=0.5):
     with torch.no_grad():
         for step, (images, image_names) in tqdm(enumerate(data_loader), total=len(data_loader)):
             images = images.cuda()    
-            outputs = model(images)['out']
+            outputs = model(images)
             
             outputs = F.interpolate(outputs, size=(2048, 2048), mode="bilinear")
             outputs = torch.sigmoid(outputs)
@@ -36,7 +40,9 @@ def test(model, data_loader, thr=0.5):
     return rles, filename_and_class
 
 def main():
-    model = torch.load(os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME))
+    model = UNet()
+    model_path=os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
+    model.load_state_dict(torch.load(model_path))
     
     tf = DataTransforms.get_transforms("valid")
 
