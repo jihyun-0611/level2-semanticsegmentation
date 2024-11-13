@@ -1,5 +1,0 @@
-wandb/
-__pycache__/
-saved_model/
-inference/
-*.ipynb
