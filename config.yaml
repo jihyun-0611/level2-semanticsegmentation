@@ -20,13 +20,13 @@ TRAIN: &train_settings
   FP16: True # FP16 사용 여부
   SCHEDULER:
     TYPE: "StepLR" # 현재 버전에서 가능한 스케쥴러는 PR 참고
-    STEP_SIZE: 3 # 스케쥴러 타입에 따라 필요한 파라미터 추가
+    STEP_SIZE: 15 # 스케쥴러 타입에 따라 필요한 파라미터 추가
     GAMMA: 0.1  # 스케쥴러 타입에 따라 필요한 파라미터 추가
 
 
 MODEL:
   SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
-  MODEL_NAME: "fcn_resnet50_best_model.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
+  MODEL_NAME: "UNet_efficientnet-b0_best_model.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
 
 INFERENCE:
   OUTPUT_DIR: "./inference" # 추론 결과 저장 디렉토리
@@ -35,7 +35,7 @@ INFERENCE:
 WANDB:
   PROJECT_NAME: "semantic-segmentation"
   ENTITY: "lv2-ss-"
-  RUN_NAME: "baseline" # 실험 이름 바꿔줘요.
-  NOTES: "train with wandb" # 특이사항 혹은 tag로 설명이 안되면 추가해주시면 됩니다. 
-  TAGS: ["fcn", "resnet50"]
+  RUN_NAME: "UNet_efficientnet-b0" # 실험 이름 바꿔줘요.
+  NOTES: "train baseline (UNet) with efficientnet-b0 encoder" # 특이사항 혹은 tag로 설명이 안되면 추가해주시면 됩니다. 
+  TAGS: ["UNet", "efficientnet-b0", "weights: imagenet"]
   CONFIGS: *train_settings

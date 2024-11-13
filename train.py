@@ -165,12 +165,13 @@ def main():
 
 
     # model 불러오기
-    # 출력 label 수 정의 (classes=29)
     model = UNet()
 
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(params=model.parameters(), lr=config.TRAIN.LR, weight_decay=1e-6)
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
+    scheduler = lr_scheduler.StepLR(optimizer, 
+                                    step_size=config.TRAIN.SCHEDULER.STEP_SIZE, 
+                                    gamma=config.TRAIN.SCHEDULER.GAMMA)
 
     # 학습 시작
     set_seed(config)
