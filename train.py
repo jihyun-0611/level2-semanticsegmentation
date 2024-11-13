@@ -12,6 +12,7 @@ from utils.utils import set_seed, save_model, wandb_model_log
 from utils.metrics import dice_coef
 from data.dataset import XRayDataset
 from data.augmentation import DataTransforms
+from models import *
 
 from config.config import Config
 
@@ -81,25 +82,31 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
     print(f'Start training..')
     
     best_dice = 0.
-    scaler = GradScaler()
+    scaler = GradScaler() if config.TRAIN.FP16 else None
     
     for epoch in range(config.TRAIN.EPOCHS):
         model.train()
 
         for step, (images, masks) in enumerate(data_loader):            
-            # gpu 연산을 위해 device 할당합니다.
             images, masks = images.cuda(), masks.cuda()
             model = model.cuda()
-
             optimizer.zero_grad()
 
-            with autocast():
+            if config.TRAIN.FP16:
+                # FP16 사용 시
+                with autocast():
+                    outputs = model(images)
+                    loss = criterion(outputs, masks)
+                
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                # FP32 사용 시
                 outputs = model(images)
                 loss = criterion(outputs, masks)
-
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+                loss.backward()
+                optimizer.step()
         
             
             # step 주기에 따라 loss를 출력합니다.
@@ -133,8 +140,8 @@ def main():
     tf_train = DataTransforms.get_transforms("train")
     tf_valid = DataTransforms.get_transforms("valid")
     
-    train_dataset = XRayDataset(is_train=True, transforms=tf_train)
-    valid_dataset = XRayDataset(is_train=False, transforms=tf_valid)
+    train_dataset = XRayDataset(is_train=True, transforms=tf_train, config=config)
+    valid_dataset = XRayDataset(is_train=False, transforms=tf_valid, config=config)
     
     train_loader = DataLoader(
         dataset=train_dataset, 
@@ -155,17 +162,12 @@ def main():
 
     # model 불러오기
     # 출력 label 수 정의 (classes=29)
-    model = smp.Unet(
-        encoder_name="efficientnet-b0", # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
-        encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
-        in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
-        classes=29,                     # model output channels (number of classes in your dataset)
-    )
+    model = UNet()
 
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(params=model.parameters(), lr=config.TRAIN.LR, weight_decay=1e-6)
     scheduler = lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
-    
+
     # 학습 시작
     set_seed(config)
     train(model, train_loader, valid_loader, criterion, optimizer, scheduler)

@@ -5,19 +5,16 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from sklearn.model_selection import GroupKFold
-from config.config import Config
-
-config = Config('config.yaml')
-
-CLASS2IND = {v: i for i, v in enumerate(config.DATA.CLASSES)}
-IND2CLASS = {v: k for k, v in CLASS2IND.items()}
 
 class XRayDataset(Dataset):
-    def __init__(self, is_train=True, transforms=None, use_pickle=True, pickle_dir="/data/ephemeral/home/data/pickle_data"):
+    def __init__(self, is_train=True, transforms=None, use_pickle=True, pickle_dir="/data/ephemeral/home/data/pickle_data", config=None):
         self.is_train = is_train
         self.transforms = transforms
         self.use_pickle = use_pickle
         self.pickle_dir = pickle_dir
+        self.config = config
+        self.CLASS2IND = {v: i for i, v in enumerate(config.DATA.CLASSES)}
+        self.IND2CLASS = {v: k for k, v in self.CLASS2IND.items()}
         os.makedirs(self.pickle_dir, exist_ok=True)  # npy 저장 폴더 생성
         
         pngs = {
@@ -79,15 +76,15 @@ class XRayDataset(Dataset):
                     data = self._create_data(image_name, label_name)
                     np.savez_compressed(image_npy_path, data[0]) 
                     np.savez_compressed(label_npy_path, data[1])  # npy 파일로 저장
-    
+
     def _create_data(self, image_name, label_name):
         """이미지와 레이블 데이터를 생성해 반환합니다."""
-        image_path = os.path.join(config.DATA.IMAGE_ROOT, image_name)
+        image_path = os.path.join(self.config.DATA.IMAGE_ROOT, image_name)
         image = cv2.imread(image_path)
         image = image / 255.0
 
-        label_path = os.path.join(config.DATA.LABEL_ROOT, label_name)
-        label_shape = tuple(image.shape[:2]) + (len(config.DATA.CLASSES), )
+        label_path = os.path.join(self.config.DATA.LABEL_ROOT, label_name)
+        label_shape = tuple(image.shape[:2]) + (len(self.config.DATA.CLASSES), )
         label = np.zeros(label_shape, dtype=np.uint8)
         
         with open(label_path, "r") as f:
@@ -95,7 +92,7 @@ class XRayDataset(Dataset):
             
         for ann in annotations:
             c = ann["label"]
-            class_ind = CLASS2IND[c]
+            class_ind = self.CLASS2IND[c]
             points = np.array(ann["points"])
             class_label = np.zeros(image.shape[:2], dtype=np.uint8)
             cv2.fillPoly(class_label, [points], 1)
@@ -133,10 +130,14 @@ class XRayDataset(Dataset):
         return image, label
 
 class XRayInferenceDataset(Dataset):
-    def __init__(self, transforms=None):
+    def __init__(self, transforms=None, config=None):
+        self.config = config
+        self.CLASS2IND = {v: i for i, v in enumerate(config.DATA.CLASSES)}
+        self.IND2CLASS = {v: k for k, v in self.CLASS2IND.items()}
+        
         pngs = {
-            os.path.relpath(os.path.join(root, fname), start=config.DATA.TEST_IMAGE_ROOT)
-            for root, _dirs, files in os.walk(config.DATA.TEST_IMAGE_ROOT)
+            os.path.relpath(os.path.join(root, fname), start=self.config.DATA.TEST_IMAGE_ROOT)
+            for root, _dirs, files in os.walk(self.config.DATA.TEST_IMAGE_ROOT)
             for fname in files
             if os.path.splitext(fname)[1].lower() == ".png"
         }
@@ -145,13 +146,13 @@ class XRayInferenceDataset(Dataset):
         
         self.filenames = _filenames
         self.transforms = transforms
-    
+
     def __len__(self):
         return len(self.filenames)
     
     def __getitem__(self, item):
         image_name = self.filenames[item]
-        image_path = os.path.join(config.DATA.TEST_IMAGE_ROOT, image_name)
+        image_path = os.path.join(self.config.DATA.TEST_IMAGE_ROOT, image_name)
         
         image = cv2.imread(image_path)
         image = image / 255.
