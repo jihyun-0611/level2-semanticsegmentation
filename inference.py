@@ -9,12 +9,16 @@ from config.config import Config
 from data.dataset import XRayInferenceDataset
 from utils.metrics import encode_mask_to_rle
 from data.augmentation import DataTransforms
+import models 
 
 import segmentation_models_pytorch as smp
+import argparse
 
-from models import *
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', type=str, default='config.yaml')
+    return parser.parse_args()
 
-config = Config('config.yaml')
 
 def test(model, data_loader, thr=0.5):
     model = model.cuda()
@@ -39,8 +43,9 @@ def test(model, data_loader, thr=0.5):
                     
     return rles, filename_and_class
 
-def main():
-    model = UNet()
+def main(config):
+    model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
+    model = model_class(config)
     model_path=os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
     model.load_state_dict(torch.load(model_path))
     
@@ -77,4 +82,6 @@ def main():
     print(f"Results saved to {output_path}")
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    config = Config(args.config)
+    main(config)
