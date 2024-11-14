@@ -38,7 +38,7 @@ INFERENCE:
 WANDB:
   PROJECT_NAME: "semantic-segmentation"
   ENTITY: "lv2-ss-"
-  RUN_NAME: "smp_Unet_resnet" # 실험 이름 바꿔줘요.
+  RUN_NAME: "smp_Unet_resnet101" # 실험 이름 바꿔줘요.
   NOTES: "resnet101" # 특이사항 혹은 tag로 설명이 안되면 추가해주시면 됩니다. 
   TAGS: ["UNet", "resnet101","AdamW"]
   CONFIGS: *train_settings
