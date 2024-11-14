@@ -38,9 +38,9 @@ TRAIN: &train_settings
   ###################################################################################################################################
 
 MODEL:
-  TYPE: "UNet" # 사용할 모델명
+  TYPE: "UNet" # train 혹은 inference 시 사용할 모델명
   SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
-  MODEL_NAME: "UNet_None_AdamW_best_model.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
+  MODEL_NAME: "UNet_None_AdamW_best_model.pt" # 모델 가중치 이름 (train 시 저장되는 모델 가중치 이름, inference 시 불러오는 모델 가중치 이름)
   PARAMS:
     BACKBONE: "efficientnet-b0"
     IN_CHANNELS: 3
