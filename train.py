@@ -179,7 +179,7 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
         save_csv = (epoch + 1 == config.TRAIN.EPOCHS)
         # validation 주기에 따라 loss를 출력하고 best model을 저장합니다.
         if (epoch + 1) % config.TRAIN.VAL_EVERY == 0:
-            dice, class_dices = validation(epoch + 1, model, val_loader, criterion)
+            dice, class_dices = validation(epoch + 1, model, val_loader, criterion, save_csv=save_csv)
             wandb.log({"val/avg_dice": dice, **class_dices})
             
             if best_dice < dice:
