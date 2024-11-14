@@ -1,9 +1,8 @@
 #!/bin/bash
 
-# experiments 디렉토리의 모든 yaml 파일을 순회
-for config in experiments/*.yaml
-do
-    echo "Running experiment with config: $config"
-    python train.py --config "$config"
-    echo "----------------------------------------"
-done
+# 단일 실험을 위한 스크립트
+CONFIG=${1:-"experiments/test.yaml"} 
+
+echo "Running single experiment with config: $CONFIG"
+python train.py --config "$CONFIG"
+echo "Experiment completed!"
