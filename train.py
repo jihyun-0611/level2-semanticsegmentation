@@ -115,6 +115,7 @@ def validation(epoch, model, data_loader, criterion, thr=0.5, save_csv=False):
     print(dice_str)
     
     avg_dice = torch.mean(dices_per_class).item()
+    print('avg_dice: ', avg_dice)
     
     return avg_dice, dice_dict
 
