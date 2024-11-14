@@ -216,7 +216,7 @@ def main():
 
     # model 불러오기
     model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
-    model = model_class()
+    model = model_class(config)
 
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.AdamW(params=model.parameters(), lr=config.TRAIN.LR, weight_decay=1e-2)
