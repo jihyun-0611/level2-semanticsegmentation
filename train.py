@@ -22,8 +22,12 @@ from torch.cuda.amp import autocast, GradScaler
 import segmentation_models_pytorch as smp
 
 import wandb
+import argparse
 
-config = Config('config.yaml')
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', type=str, default='config.yaml')
+    return parser.parse_args()
 
 
 def validation(epoch, model, data_loader, criterion, thr=0.5, save_csv=False):
@@ -224,4 +228,6 @@ def main():
     train(model, train_loader, valid_loader, criterion, optimizer, scheduler)
 
 if __name__ == '__main__':
+    args = parse_args()
+    config = Config(args.config)
     main()
