@@ -218,11 +218,39 @@ def main():
     model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
     model = model_class(config)
 
-    criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.AdamW(params=model.parameters(), lr=config.TRAIN.LR, weight_decay=1e-2)
-    scheduler = lr_scheduler.StepLR(optimizer, 
-                                    step_size=100, 
-                                    gamma=0.1)
+    # Loss function config화 (YAML에 인자가 없으면 원래 코드가 작동 됨.)
+    if hasattr(config.TRAIN, 'LOSS'):
+        criterion = getattr(nn, config.TRAIN.LOSS.NAME)()
+    else:
+        criterion = nn.BCEWithLogitsLoss()
+
+    # Optimizer
+    if hasattr(config.TRAIN, 'OPTIMIZER'):
+        optimizer = getattr(optim, config.TRAIN.OPTIMIZER.NAME)(
+            params=model.parameters(), 
+            lr=config.TRAIN.LR, 
+            weight_decay=config.TRAIN.OPTIMIZER.WEIGHT_DECAY
+        )
+    else:
+        optimizer = optim.AdamW(
+            params=model.parameters(), 
+            lr=config.TRAIN.LR, 
+            weight_decay=1e-2
+        )
+
+    # Scheduler
+    if hasattr(config.TRAIN, 'SCHEDULER'):
+        scheduler = getattr(lr_scheduler, config.TRAIN.SCHEDULER.NAME)(
+            optimizer,
+            step_size=config.TRAIN.SCHEDULER.STEP_SIZE,
+            gamma=config.TRAIN.SCHEDULER.GAMMA
+        )
+    else:
+        scheduler = lr_scheduler.StepLR(
+            optimizer, 
+            step_size=100, 
+            gamma=0.1
+        )
 
     # 학습 시작
     set_seed(config)
