@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.nn import functional as F
-import torchvision.models as models
+#import torchvision.models as models
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from tqdm import tqdm
@@ -14,7 +14,7 @@ from utils.utils import set_seed, save_model, wandb_model_log
 from utils.metrics import dice_coef, encode_mask_to_rle
 from data.dataset import XRayDataset
 from data.augmentation import DataTransforms
-from models import *
+import models
 
 from config.config import Config
 
@@ -22,11 +22,13 @@ from torch.cuda.amp import autocast, GradScaler
 import segmentation_models_pytorch as smp
 
 import wandb
+import argparse
 
-config = Config('config.yaml')
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', type=str, default='config.yaml')
+    return parser.parse_args()
 
-CLASS2IND = {v: i for i, v in enumerate(config.DATA.CLASSES)}
-IND2CLASS = {v: k for k, v in CLASS2IND.items()}
 
 def validation(epoch, model, data_loader, criterion, thr=0.5, save_csv=False):
     print(f'Start validation #{epoch:2d}')
@@ -74,7 +76,7 @@ def validation(epoch, model, data_loader, criterion, thr=0.5, save_csv=False):
                     for c, segm in enumerate(output):
                         rle = encode_mask_to_rle(segm.cpu())
                         rles.append(rle)
-                        classes.append(IND2CLASS[c])
+                        classes.append(data_loader.dataset.IND2CLASS[c])
                         filenames.append(image_name)
             ################################################################################################
         print('val total loss: ', (total_loss/cnt))
@@ -213,7 +215,8 @@ def main():
 
 
     # model 불러오기
-    model = UNet()
+    model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
+    model = model_class()
 
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.AdamW(params=model.parameters(), lr=config.TRAIN.LR, weight_decay=1e-2)
@@ -226,4 +229,6 @@ def main():
     train(model, train_loader, valid_loader, criterion, optimizer, scheduler)
 
 if __name__ == '__main__':
+    args = parse_args()
+    config = Config(args.config)
     main()
