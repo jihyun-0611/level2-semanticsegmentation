@@ -14,7 +14,7 @@ DATA:
 TRAIN: &train_settings
   BATCH_SIZE: 8
   VAL_EVERY: 5
-  EPOCHS: 1
+  EPOCHS: 30
   LR: 0.005
   RANDOM_SEED: 21 # 랜덤 시드
   FP16: True # FP16 사용 여부
