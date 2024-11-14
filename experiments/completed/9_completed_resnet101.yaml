@@ -19,7 +19,7 @@ TRAIN: &train_settings
   RANDOM_SEED: 21 # 랜덤 시드
   FP16: True # FP16 사용 여부
   OUTPUT_DIR: "./train"
-  CSV_NAME: "validation_output.csv"
+  CSV_NAME: "resnet101_validation_output.csv"
 
 MODEL:
   TYPE: "UNet"  # 사용할 모델명
