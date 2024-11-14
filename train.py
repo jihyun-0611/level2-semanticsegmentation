@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.nn import functional as F
-import torchvision.models as models
+#import torchvision.models as models
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from tqdm import tqdm
@@ -14,7 +14,7 @@ from utils.utils import set_seed, save_model, wandb_model_log
 from utils.metrics import dice_coef, encode_mask_to_rle
 from data.dataset import XRayDataset
 from data.augmentation import DataTransforms
-from models import *
+import models
 
 from config.config import Config
 
@@ -215,7 +215,8 @@ def main():
 
 
     # model 불러오기
-    model = UNet()
+    model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
+    model = model_class()
 
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.AdamW(params=model.parameters(), lr=config.TRAIN.LR, weight_decay=1e-2)
