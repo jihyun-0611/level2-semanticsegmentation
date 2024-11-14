@@ -25,8 +25,6 @@ import wandb
 
 config = Config('config.yaml')
 
-CLASS2IND = {v: i for i, v in enumerate(config.DATA.CLASSES)}
-IND2CLASS = {v: k for k, v in CLASS2IND.items()}
 
 def validation(epoch, model, data_loader, criterion, thr=0.5, save_csv=False):
     print(f'Start validation #{epoch:2d}')
@@ -74,7 +72,7 @@ def validation(epoch, model, data_loader, criterion, thr=0.5, save_csv=False):
                     for c, segm in enumerate(output):
                         rle = encode_mask_to_rle(segm.cpu())
                         rles.append(rle)
-                        classes.append(IND2CLASS[c])
+                        classes.append(data_loader.dataset.IND2CLASS[c])
                         filenames.append(image_name)
             ################################################################################################
         print('val total loss: ', (total_loss/cnt))
