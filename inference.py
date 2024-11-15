@@ -46,9 +46,15 @@ def test(model, data_loader, thr=0.5):
 
 def main(config):
     model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
-    model = model_class(config).get_model()
-    model_path=os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
-    model.load_state_dict(torch.load(model_path))
+    try:
+        model = model_class(config).get_model()
+        model_path=os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
+        model.load_state_dict(torch.load(model_path))
+    except Exception as e:
+        model = model_class(config)
+        model_path=os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
+        model.load_state_dict(torch.load(model_path))
+        print(f"에러로 인해 get_model()을 사용하여 모델을 로드합니다.")
     
     tf = DataTransforms.get_transforms("valid")
 
