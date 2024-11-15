@@ -3,6 +3,7 @@ import numpy as np
 import random
 import os
 import wandb
+import pandas as pd
 
 def set_seed(config):
     torch.manual_seed(config.TRAIN.RANDOM_SEED)
@@ -25,3 +26,16 @@ def wandb_model_log(config):
     artifact = wandb.Artifact(name=f"{config.MODEL.MODEL_NAME}", type="model")
     artifact.add_file(model_path)
     wandb.log_artifact(artifact)
+    
+def save_csv(config, rles, mode, epoch=None):
+    mode_config = getattr(config, mode.upper())
+    os.makedirs(mode_config.OUTPUT_DIR, exist_ok=True)
+    csv_name = f'epoch{epoch}_' + mode_config.CSV_NAME if epoch is not None else mode_config.CSV_NAME
+    output_path = os.path.join(mode_config.OUTPUT_DIR, csv_name)
+    df = pd.DataFrame({
+        "image_name": rles['image_names'],
+        "class": rles['classes'],
+        "rle": rles['rles'],
+    })
+    df.to_csv(output_path, index=False)
+    print(f"{mode} results saved to {output_path}")

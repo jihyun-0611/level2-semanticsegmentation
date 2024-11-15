@@ -7,6 +7,7 @@ import os
 
 from config.config import Config
 from data.dataset import XRayInferenceDataset
+from utils.utils import save_csv
 from utils.metrics import encode_mask_to_rle
 from data.augmentation import DataTransforms
 import models 
@@ -24,8 +25,7 @@ def test(model, data_loader, thr=0.5):
     model = model.cuda()
     model.eval()
 
-    rles = []
-    filename_and_class = []
+    result_rles = {'image_names': [], 'classes': [], 'rles': []}
     with torch.no_grad():
         for step, (images, image_names) in tqdm(enumerate(data_loader), total=len(data_loader)):
             images = images.cuda()    
@@ -38,10 +38,11 @@ def test(model, data_loader, thr=0.5):
             for output, image_name in zip(outputs, image_names):
                 for c, segm in enumerate(output):
                     rle = encode_mask_to_rle(segm)
-                    rles.append(rle)
-                    filename_and_class.append(f"{data_loader.dataset.IND2CLASS[c]}_{image_name}")
+                    result_rles['rles'].append(rle)
+                    result_rles['classes'].append(data_loader.dataset.IND2CLASS[c][c])
+                    result_rles['image_names'].append(os.path.basename(image_name))
                     
-    return rles, filename_and_class
+    return result_rles
 
 def main(config):
     model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
@@ -60,26 +61,8 @@ def main(config):
     drop_last=False
     )
 
-    rles, filename_and_class = test(model, test_loader)
-
-    classes, filename = zip(*[x.split("_") for x in filename_and_class])
-    image_name = [os.path.basename(f) for f in filename]
-
-    os.makedirs(config.INFERENCE.OUTPUT_DIR, exist_ok=True)
-    
-    output_path = os.path.join(
-        config.INFERENCE.OUTPUT_DIR,
-        config.INFERENCE.CSV_NAME
-    )
-
-    df = pd.DataFrame({
-        "image_name": image_name,
-        "class": classes,
-        "rle": rles,
-    })
-
-    df.to_csv(output_path, index=False)
-    print(f"Results saved to {output_path}")
+    rles = test(model, test_loader)
+    save_csv(config, rles, mode='INFERENCE', epoch=None)
 
 if __name__ == "__main__":
     args = parse_args()
