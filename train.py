@@ -10,7 +10,7 @@ from tqdm import tqdm
 import pandas as pd
 import os
 
-from utils.utils import set_seed, save_model, wandb_model_log
+from utils.utils import set_seed, save_model, wandb_model_log, save_csv
 from utils.metrics import dice_coef, encode_mask_to_rle
 from data.dataset import XRayDataset
 from data.augmentation import DataTransforms
@@ -30,14 +30,13 @@ def parse_args():
     return parser.parse_args()
 
 
-def validation(epoch, model, data_loader, criterion, thr=0.5, save_csv=False):
+def validation(epoch, model, data_loader, criterion, thr=0.5):
     print(f'Start validation #{epoch:2d}')
     model.eval()
 
     dices = []
-    rles = []
-    classes = []
-    filenames = []
+    result_rles = {'image_names': [], 'classes': [], 'rles': []}
+    
     with torch.no_grad():
         total_loss = 0
         cnt = 0
@@ -65,42 +64,20 @@ def validation(epoch, model, data_loader, criterion, thr=0.5, save_csv=False):
             
             dice = dice_coef(outputs, masks)
             dices.append(dice)
+
+            # save validation outputs (rles) to 'result_rles' 
+            dataset = data_loader.dataset
+            batch_filenames = [dataset.filenames[i] for i in range(step * data_loader.batch_size, (step + 1) * data_loader.batch_size)]
+    
+            for output, image_name in zip(outputs, batch_filenames):
+                for c, segm in enumerate(output):
+                    rle = encode_mask_to_rle(segm.cpu())
+                    result_rles['rles'].append(rle)
+                    result_rles['classes'].append(data_loader.dataset.IND2CLASS[c])
+                    result_rles['image_names'].append(os.path.basename(image_name))
             
-            ###############################################################################################
-            # save validation outputs in list
-            if save_csv:
-                dataset = data_loader.dataset
-                batch_filenames = [dataset.filenames[i] for i in range(step * data_loader.batch_size, (step + 1) * data_loader.batch_size)]
-                
-                for output, image_name in zip(outputs, batch_filenames):
-                    for c, segm in enumerate(output):
-                        rle = encode_mask_to_rle(segm.cpu())
-                        rles.append(rle)
-                        classes.append(data_loader.dataset.IND2CLASS[c])
-                        filenames.append(image_name)
-            ################################################################################################
         print('val total loss: ', (total_loss/cnt))
         wandb.log({"val/loss": total_loss/cnt})
-    ########################################################################################################        
-    # 모든 스텝의 결과를 하나의 CSV 파일로 저장
-    if save_csv:
-        image_name = [os.path.basename(f) for f in filenames]
-        os.makedirs(config.TRAIN.OUTPUT_DIR, exist_ok=True)
-    
-        output_path = os.path.join(
-            config.TRAIN.OUTPUT_DIR,
-            config.TRAIN.CSV_NAME
-        )
-
-        df = pd.DataFrame({
-            "image_name": image_name,
-            "class": classes,
-            "rle": rles,
-        })
-
-        df.to_csv(output_path, index=False)
-        print(f"Validation Results saved to {output_path}")
-    ########################################################################################################
                 
     dices = torch.cat(dices, 0)
     dices_per_class = torch.mean(dices, 0)
@@ -117,7 +94,7 @@ def validation(epoch, model, data_loader, criterion, thr=0.5, save_csv=False):
     avg_dice = torch.mean(dices_per_class).item()
     print('avg_dice: ', avg_dice)
     
-    return avg_dice, dice_dict
+    return avg_dice, dice_dict, result_rles
 
 def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
     run = wandb.init(
@@ -132,7 +109,8 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
     
     print(f'Start training..')
     
-    best_dice = 0.
+    best_dice, best_dice_epoch = 0., 0.
+    best_rles = None
     scaler = GradScaler() if config.TRAIN.FP16 else None
     
     for epoch in range(config.TRAIN.EPOCHS):
@@ -174,21 +152,23 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
                 
         scheduler.step()
         
-
-        ###########################################################################
-        # 마지막 epoch에서만 PDF 저장을 활성화하여 validation 호출
-        save_csv = (epoch + 1 == config.TRAIN.EPOCHS)
+        
         # validation 주기에 따라 loss를 출력하고 best model을 저장합니다.
         if (epoch + 1) % config.TRAIN.VAL_EVERY == 0:
-            dice, class_dices = validation(epoch + 1, model, val_loader, criterion, save_csv=save_csv)
+            dice, class_dices, rles = validation(epoch + 1, model, val_loader, criterion)
             wandb.log({"val/avg_dice": dice, **class_dices})
             
             if best_dice < dice:
                 print(f"Best performance at epoch: {epoch + 1}, {best_dice:.4f} -> {dice:.4f}")
                 print(f"Save model in {config.MODEL.SAVED_DIR}")
-                best_dice = dice
+                best_dice, best_dice_epoch = dice, epoch+1
+                best_rles = rles
                 save_model(config, model)
                 wandb_model_log(config)
+                
+    if best_rles:
+        save_csv(config, best_rles, mode='TRAIN', epoch=best_dice_epoch)
+        
     wandb.finish()
     
 def main():
