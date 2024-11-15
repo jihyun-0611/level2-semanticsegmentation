@@ -39,7 +39,7 @@ def test(model, data_loader, thr=0.5):
                 for c, segm in enumerate(output):
                     rle = encode_mask_to_rle(segm)
                     result_rles['rles'].append(rle)
-                    result_rles['classes'].append(data_loader.dataset.IND2CLASS[c][c])
+                    result_rles['classes'].append(data_loader.dataset.IND2CLASS[c])
                     result_rles['image_names'].append(os.path.basename(image_name))
                     
     return result_rles
