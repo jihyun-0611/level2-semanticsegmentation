@@ -24,7 +24,7 @@ TRAIN: &train_settings
 MODEL:
   TYPE: "UNet"  # 사용할 모델명
   SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
-  MODEL_NAME: "smp_resnet101.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
+  MODEL_NAME: "smp_resnet101_best_model_decay_test.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
   PARAMS:
     BACKBONE: "resnet101"
     OUTPUT_STRIDE: 16
