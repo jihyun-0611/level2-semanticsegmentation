@@ -1,9 +1,7 @@
 import os.path as osp
 from typing import Tuple
 import wandb
-from config.config import Config
 
-config = Config('config.yaml')
 
 def download_artifacts(
     project: str,
@@ -44,8 +42,8 @@ def download_artifacts(
 model_path = download_artifacts(
     project="semantic-segmentation",
     entity="lv2-ss-",
-    run_id="bcm6tz5j", # 다운로드 하고 싶은 run_id 작성해주셔야 합니다. wandb UI에서 overview 탭에서 확인할 수 있어요. 
-    model_filename=config.MODEL.MODEL_NAME, 
+    run_id="5pzsgcih", # 다운로드 하고 싶은 run_id 작성해주셔야 합니다. wandb UI에서 overview 탭에서 확인할 수 있어요. 
+    model_filename='smp_mit_b5_best_model_decay_test.pt', 
 )
 
 # 다운로드된 경로 출력
