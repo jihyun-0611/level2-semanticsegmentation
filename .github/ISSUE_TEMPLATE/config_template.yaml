@@ -1,0 +1,15 @@
+name: "📁 Config Upload"
+description: config 파일 업로드
+labels: ["config"]
+body:
+  - type: textarea
+    attributes:
+      label: 📄 config 설명
+      description: "업로드하려는 config 파일에 대한 설명을 작성해 주세요."
+      placeholder: "간략히 적어주셔도 됩니다"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 📝 기타 (특이 사항)
+      description: 기타 도움이 될 만한 정보 및 특이 사항을 작성해 주세요.
