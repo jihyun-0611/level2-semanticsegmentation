@@ -39,14 +39,14 @@ def test(model, data_loader, thr=0.5):
                 for c, segm in enumerate(output):
                     rle = encode_mask_to_rle(segm)
                     result_rles['rles'].append(rle)
-                    result_rles['classes'].append(data_loader.dataset.IND2CLASS[c][c])
+                    result_rles['classes'].append(data_loader.dataset.IND2CLASS[c])
                     result_rles['image_names'].append(os.path.basename(image_name))
                     
     return result_rles
 
 def main(config):
     model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
-    model = model_class(config)
+    model = model_class(config).get_model()
     model_path=os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
     model.load_state_dict(torch.load(model_path))
     
