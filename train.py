@@ -113,25 +113,35 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
     best_rles = None
     scaler = GradScaler() if config.TRAIN.FP16 else None
     
+    if hasattr(config.TRAIN, 'ACCUMULATION_STEPS'):
+        accumulation_steps = config.TRAIN.ACCUMULATION_STEPS
+    else:
+        accumulation_steps = 1
+
     for epoch in range(config.TRAIN.EPOCHS):
         model.train()
         current_lr = scheduler.get_last_lr()[0]  # 첫 번째 학습률을 가져옵니다.
         print(f'Epoch [{epoch+1}/{config.TRAIN.EPOCHS}] | Learning Rate: {current_lr}') 
 
+        optimizer.zero_grad()
+
         for step, (images, masks) in enumerate(data_loader):            
             images, masks = images.cuda(), masks.cuda()
             model = model.cuda()
-            optimizer.zero_grad()
 
             if config.TRAIN.FP16:
                 # FP16 사용 시
                 with autocast():
                     outputs = model(images)
                     loss = criterion(outputs, masks)
+                    loss = loss / accumulation_steps
                 
                 scaler.scale(loss).backward()
-                scaler.step(optimizer)
-                scaler.update()
+                if (step+1) % accumulation_steps == 0 or (step + 1) == len(data_loader):
+                    scaler.step(optimizer)
+                    scaler.update()
+                    optimizer.zero_grad()
+
             else:
                 # FP32 사용 시
                 outputs = model(images)
@@ -146,9 +156,9 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
                     f'{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | '
                     f'Epoch [{epoch+1}/{config.TRAIN.EPOCHS}], '
                     f'Step [{step+1}/{len(data_loader)}], '
-                    f'Loss: {round(loss.item(),4)}'
+                    f'Loss: {round(loss.item() * accumulation_steps,4)}'
                 )
-                wandb.log({"train/loss": round(loss.item(),4), "lr": current_lr, "epoch": epoch+1})
+                wandb.log({"train/loss": round(loss.item() * accumulation_steps,4), "lr": current_lr, "epoch": epoch+1})
                 
         scheduler.step()
         
