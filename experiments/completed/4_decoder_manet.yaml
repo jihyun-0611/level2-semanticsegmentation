@@ -15,25 +15,25 @@ TRAIN: &train_settings
   BATCH_SIZE: 8
   VAL_EVERY: 5
   EPOCHS: 30
-  LR: 0.003
+  LR: 0.01
   RANDOM_SEED: 21 # 랜덤 시드
   FP16: True # FP16 사용 여부
   OUTPUT_DIR: "./train"
-  CSV_NAME: "validation_decoder_linknet_0.003_output.csv"
+  CSV_NAME: "validation_decoder_manet_0.005_CosineAnnealingLR__output.csv"
   LOSS:
     NAME: "BCEWithLogitsLoss"
   OPTIMIZER:
     NAME: "AdamW"
     WEIGHT_DECAY: 0.01
   SCHEDULER:
-    NAME: "StepLR"
-    STEP_SIZE: 100
-    GAMMA: 0.1
+    NAME: "CosineAnnealingLR"
+    T_max: 20
+    eta_min: 0
 
 MODEL:
-  TYPE: "linknet"  # 사용할 모델명
+  TYPE: "manet"  # 사용할 모델명
   SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
-  MODEL_NAME: "decoder_llinknet_0.003_best_model.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
+  MODEL_NAME: "decoder_manet_0.005_CosineAnnealingLR_best_model.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
   PARAMS:
     BACKBONE: "efficientnet-b0"
     IN_CHANNELS: 3
@@ -41,13 +41,13 @@ MODEL:
 
 INFERENCE:
   OUTPUT_DIR: "./inference" # 추론 결과 저장 디렉토리
-  CSV_NAME: "decoder_linknet_0.003_output.csv" # 추론 결과 저장 파일 이름
+  CSV_NAME: "decoder_manet_0.005_CosineAnnealingLR_output.csv" # 추론 결과 저장 파일 이름
 
 WANDB:
   PROJECT_NAME: "semantic-segmentation"
   ENTITY: "lv2-ss-"
-  RUN_NAME: "3_decoder_linknet_0.003" # 실험 이름 바꿔줘요.
+  RUN_NAME: "4_decoder_manet_0.005_CosineAnnealingLR" # 실험 이름 바꿔줘요.
   NOTES: "" # 특이사항 혹은 tag로 설명이 안되면 추가해주시면 됩니다. 
-  TAGS: ["linknet", "efficientnet-b0", "weights: imagenet", "AdamW", "LR : 0.003"]
+  TAGS: ["manet", "efficientnet-b0", "weights: imagenet", "AdamW", "LR : 0.005", "scheduler : CosineAnnealingLR"]
   CONFIGS: *train_settings
   WATCH_STEP: 5 # 5 epoch마다 wandb에 gradients/parameters 시각화
