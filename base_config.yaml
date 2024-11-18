@@ -20,6 +20,7 @@ TRAIN: &train_settings
   FP16: True # FP16 사용 여부
   OUTPUT_DIR: "./train"
   CSV_NAME: "validation_output.csv" # 검증 결과 저장 파일 이름
+  ACCUMULATION_STEPS: 1
   ###################################################################################################################################
   ## LOSS, OPTIMIZER, SCHEDULER가 없으면 Train.py의 설정으로 학습됩니다. LOSS, OPTIMIZER, SCHEDULER 없이 학습하실 때, 밑에 관련 설정을 작성해주세요.
   ## LOSS : 관련 설정을 적어주세요
