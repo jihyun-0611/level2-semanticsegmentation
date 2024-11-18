@@ -1,9 +1,9 @@
 import segmentation_models_pytorch as smp
 from models.base_model import BaseModel
 
-class pspent(BaseModel):
+class PSPNet(BaseModel):
     def __init__(self, config):
-        super(pspent, self).__init__()
+        super(PSPNet, self).__init__()
         params = config.MODEL.PARAMS
         self.model = smp.PSPNet(
             encoder_name=params.BACKBONE,
