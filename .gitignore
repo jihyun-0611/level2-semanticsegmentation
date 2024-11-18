@@ -1,3 +1,5 @@
 __pycache__/
 wandb/
 saved_model/
+train/
+inference/
