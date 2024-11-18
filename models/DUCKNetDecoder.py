@@ -14,7 +14,7 @@ class DUCKNetDecoder(BaseModel):
         super(DUCKNetDecoder, self).__init__()
 
         # SMP Encoder 설정
-        self.encoder = smp.Unet(encoder_name="efficientnet-b0", encoder_weights="imagenet").encoder
+        self.encoder = smp.Unet(encoder_name="timm-efficientnet-b8", encoder_weights="imagenet").encoder
         encoder_channels = self.encoder.out_channels
 
 
@@ -59,12 +59,11 @@ class DUCKNetDecoder(BaseModel):
 
         self.final_conv = nn.Conv2d(self.starting_filters, self.classes, kernel_size=1)
 
-        # 인코더 (백본) 변경을 위한 블럭 구현
-        self.upchannel1 = nn.Conv2d(in_channels=112, out_channels=544, kernel_size=1, stride=1, padding=0)
-        self.upchannel2 = nn.Conv2d(in_channels=40, out_channels=272, kernel_size=1, stride=1, padding=0)
-        self.upchannel3 = nn.Conv2d(in_channels=24, out_channels=136, kernel_size=1, stride=1, padding=0)
-        self.upchannel4 = nn.Conv2d(in_channels=32, out_channels=68, kernel_size=1, stride=1, padding=0)
-        self.upchannel5 = nn.Conv2d(in_channels=3, out_channels=34, kernel_size=1, stride=1, padding=0)
+        self.upchannel1 = nn.Conv2d(in_channels=encoder_channels[4], out_channels=544, kernel_size=1, stride=1, padding=0)
+        self.upchannel2 = nn.Conv2d(in_channels=encoder_channels[3], out_channels=272, kernel_size=1, stride=1, padding=0)
+        self.upchannel3 = nn.Conv2d(in_channels=encoder_channels[2], out_channels=136, kernel_size=1, stride=1, padding=0)
+        self.upchannel4 = nn.Conv2d(in_channels=encoder_channels[1], out_channels=68, kernel_size=1, stride=1, padding=0)
+        self.upchannel5 = nn.Conv2d(in_channels=encoder_channels[0], out_channels=34, kernel_size=1, stride=1, padding=0)
         
     def forward(self, x):
         # SMP 인코더 출력
