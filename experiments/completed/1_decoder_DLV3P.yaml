@@ -1,0 +1,53 @@
+DATA:
+  IMAGE_ROOT: "/data/ephemeral/home/data/train/DCM" # 학습 이미지 디렉토리 경로
+  LABEL_ROOT: "/data/ephemeral/home/data/train/outputs_json" # 학습 json 디렉토리 경로
+  TEST_IMAGE_ROOT: "/data/ephemeral/home/data/test/DCM" # 테스트 이미지 디렉토리 경로
+  CLASSES: [
+      'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
+      'finger-6', 'finger-7', 'finger-8', 'finger-9', 'finger-10',
+      'finger-11', 'finger-12', 'finger-13', 'finger-14', 'finger-15',
+      'finger-16', 'finger-17', 'finger-18', 'finger-19', 'Trapezium',
+      'Trapezoid', 'Capitate', 'Hamate', 'Scaphoid', 'Lunate',
+      'Triquetrum', 'Pisiform', 'Radius', 'Ulna',
+  ]
+
+TRAIN: &train_settings
+  BATCH_SIZE: 8
+  VAL_EVERY: 5
+  EPOCHS: 30
+  LR: 0.005
+  RANDOM_SEED: 21 # 랜덤 시드
+  FP16: True # FP16 사용 여부
+  OUTPUT_DIR: "./train"
+  CSV_NAME: "validation_decoder_DLV3P_output.csv"
+  LOSS:
+    NAME: "BCEWithLogitsLoss"
+  OPTIMIZER:
+    NAME: "AdamW"
+    WEIGHT_DECAY: 0.01
+  SCHEDULER:
+    NAME: "StepLR"
+    STEP_SIZE: 100
+    GAMMA: 0.1
+
+MODEL:
+  TYPE: "DeepLabV3Plus"  # 사용할 모델명
+  SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
+  MODEL_NAME: "decoder_DLV3P_best_model.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
+  PARAMS:
+    BACKBONE: "efficientnet-b0"
+    IN_CHANNELS: 3
+    OUT_CHANNELS: 29
+
+INFERENCE:
+  OUTPUT_DIR: "./inference" # 추론 결과 저장 디렉토리
+  CSV_NAME: "decoder_DLV3P_output.csv" # 추론 결과 저장 파일 이름
+
+WANDB:
+  PROJECT_NAME: "semantic-segmentation"
+  ENTITY: "lv2-ss-"
+  RUN_NAME: "1_decoder_DLV3P" # 실험 이름 바꿔줘요.
+  NOTES: "" # 특이사항 혹은 tag로 설명이 안되면 추가해주시면 됩니다. 
+  TAGS: ["DeepLabV3Plus", "efficientnet-b0", "weights: imagenet", "AdamW"]
+  CONFIGS: *train_settings
+  WATCH_STEP: 5 # 5 epoch마다 wandb에 gradients/parameters 시각화
