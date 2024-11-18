@@ -47,21 +47,26 @@ class XRayDataset(Dataset):
         
         filenames = []
         labelnames = []
+
+        if hasattr(config.TRAIN, 'VAL_NUM'):
+            val_num = config.TRAIN.VAL_NUM
+        else:
+            val_num = 0
+
         for i, (x, y) in enumerate(gkf.split(_filenames, ys, groups)):
             if is_train:
                 # 0번을 validation dataset으로 사용합니다.
-                if i == 0:
+                if i == val_num:
                     continue
                     
                 filenames += list(_filenames[y])
                 labelnames += list(_labelnames[y])
             
             else:
-                filenames = list(_filenames[y])
-                labelnames = list(_labelnames[y])
-                
-                # skip i > 0
-                break
+                if i == val_num:
+                    filenames = list(_filenames[y])
+                    labelnames = list(_labelnames[y])
+                    break
 
         self.filenames = filenames
         self.labelnames = labelnames
