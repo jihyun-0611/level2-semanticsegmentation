@@ -7,5 +7,6 @@ from models.pan import pan
 from models.PSPNet import PSPNet
 from models.unetplusplus import unetplusplus
 from models.DUCKNet import DUCKNet
+from models.DUCKNetDecoder import DUCKNetDecoder
 
-__all__ = ["UNet", "DeepLabV3Plus", "fpn", "linknet", "manet", "pan", "PSPNet", "unetplusplus", "DUCKNet"]
+__all__ = ["UNet", "DeepLabV3Plus", "fpn", "linknet", "manet", "pan", "PSPNet", "unetplusplus", "DUCKNet", "DUCKNetDecoder"]
