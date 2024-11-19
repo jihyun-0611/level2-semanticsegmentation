@@ -12,9 +12,13 @@ import os
 
 from utils.utils import set_seed, save_model, wandb_model_log, save_csv
 from utils.metrics import dice_coef, encode_mask_to_rle
+from utils.optimizer import get_optimizer
+from utils.scheduler import get_scheduler
+from utils.loss import get_loss
 from data.dataset import XRayDataset
 from data.augmentation import DataTransforms
 import models
+
 
 from config.config import Config
 
@@ -209,39 +213,9 @@ def main():
     model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
     model = model_class(config)
 
-    # Loss function config화 (YAML에 인자가 없으면 원래 코드가 작동 됨.)
-    if hasattr(config.TRAIN, 'LOSS'):
-        criterion = getattr(nn, config.TRAIN.LOSS.NAME)()
-    else:
-        criterion = nn.BCEWithLogitsLoss()
-
-    # Optimizer
-    if hasattr(config.TRAIN, 'OPTIMIZER'):
-        optimizer = getattr(optim, config.TRAIN.OPTIMIZER.NAME)(
-            params=model.parameters(), 
-            lr=config.TRAIN.LR, 
-            weight_decay=config.TRAIN.OPTIMIZER.WEIGHT_DECAY
-        )
-    else:
-        optimizer = optim.AdamW(
-            params=model.parameters(), 
-            lr=config.TRAIN.LR, 
-            weight_decay=1e-2
-        )
-
-    # Scheduler
-    if hasattr(config.TRAIN, 'SCHEDULER'):
-        scheduler = getattr(lr_scheduler, config.TRAIN.SCHEDULER.NAME)(
-            optimizer,
-            step_size=config.TRAIN.SCHEDULER.STEP_SIZE,
-            gamma=config.TRAIN.SCHEDULER.GAMMA
-        )
-    else:
-        scheduler = lr_scheduler.StepLR(
-            optimizer, 
-            step_size=100, 
-            gamma=0.1
-        )
+    criterion = get_loss(config)
+    optimizer = get_optimizer(config, model)
+    scheduler = get_scheduler(config, optimizer)
 
     # 학습 시작
     set_seed(config)
@@ -249,5 +223,13 @@ def main():
 
 if __name__ == '__main__':
     args = parse_args()
-    config = Config(args.config)
+
+    DEFAULT_TRAIN_CONFIG = {
+    "LOSS": {"NAME": "BCEWithLogitsLoss", "PARAMS": {}},
+    "OPTIMIZER": {"NAME": "AdamW", "PARAMS": {"weight_decay": 0.01}},
+    "SCHEDULER": {"NAME": "StepLR", "PARAMS": {"step_size": 100, "gamma": 0.1}},
+    }
+
+    config = Config(args.config, DEFAULT_TRAIN_CONFIG)
+    
     main()
