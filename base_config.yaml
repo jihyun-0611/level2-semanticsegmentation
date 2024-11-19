@@ -19,7 +19,7 @@ TRAIN: &train_settings
   RANDOM_SEED: 21 # 랜덤 시드
   FP16: True # FP16 사용 여부
   OUTPUT_DIR: "./train"
-  CSV_NAME: "validation_output.csv" # 검증 결과 저장 파일 이름
+  CSV_NAME: "base_config.csv" # 검증 결과 저장 파일 이름
   VAL_NUM: 0
   ACCUMULATION_STEPS: 1
   ######################################################################################################################################################
@@ -50,11 +50,27 @@ TRAIN: &train_settings
       eta_min: 0.01
       last_epoch: -1
   ###################################################################################################################################
+  TRANSFORMS:
+    - NAME: Resize
+      PARAMS:
+        height: 1024
+        width: 1024
+    - NAME: ElasticTransform
+      PARAMS:
+        alpha: 1
+        sigma: 50
+        p: 0.2
+    - NAME: RandomBrightnessContrast
+      PARAMS:
+        brightness_limit: 0.2
+        contrast_limit: 0.2
+        p: 0.5
+
 
 MODEL:
   TYPE: "UNet" # train 혹은 inference 시 사용할 모델명
   SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
-  MODEL_NAME: "UNet_None_AdamW_best_model.pt" # 모델 가중치 이름 (train 시 저장되는 모델 가중치 이름, inference 시 불러오는 모델 가중치 이름)
+  MODEL_NAME: "base_config.pt" # 모델 가중치 이름 (train 시 저장되는 모델 가중치 이름, inference 시 불러오는 모델 가중치 이름)
   PARAMS:
     BACKBONE: "efficientnet-b0"
     IN_CHANNELS: 3
@@ -62,7 +78,13 @@ MODEL:
 
 INFERENCE:
   OUTPUT_DIR: "./inference" # 추론 결과 저장 디렉토리
-  CSV_NAME: "UNet_None_AdamW_output.csv" # 추론 결과 저장 파일 이름
+  CSV_NAME: "base_config.csv" # 추론 결과 저장 파일 이름
+  ## Validation 및 inference에 사용할 데이터 증강
+  TRANSFORMS:
+    - NAME: Resize
+      PARAMS:
+        height: 1024
+        width: 1024
 
 WANDB:
   PROJECT_NAME: "semantic-segmentation"
