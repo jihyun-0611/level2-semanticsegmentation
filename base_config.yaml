@@ -22,21 +22,33 @@ TRAIN: &train_settings
   CSV_NAME: "validation_output.csv" # 검증 결과 저장 파일 이름
   VAL_NUM: 0
   ACCUMULATION_STEPS: 1
-  ###################################################################################################################################
-  ## LOSS, OPTIMIZER, SCHEDULER가 없으면 Train.py의 설정으로 학습됩니다. LOSS, OPTIMIZER, SCHEDULER 없이 학습하실 때, 밑에 관련 설정을 작성해주세요.
+  ######################################################################################################################################################
+  ## LOSS, OPTIMIZER, SCHEDULER의 파라미터는 PARAMS 밑에 적어주셔야 합니다.
+  ## LOSS, OPTIMIZER, SCHEDULER가 없으면 Train.py의 DEFAULT_TRAIN_CONFIG 설정으로 학습됩니다. LOSS, OPTIMIZER, SCHEDULER 없이 학습하실 때, 밑에 관련 설정을 작성해주세요.
   ## LOSS : 관련 설정을 적어주세요
   ## OPTIMIZER : 관련 설정을 적어주세요
   ## SCHEDULER : 관련 설정을 적어주세요
-  ###################################################################################################################################
+  ######################################################################################################################################################
   LOSS:
-    NAME: "BCEWithLogitsLoss"
+    NAME: CrossEntropyLoss
+    PARAMS:
+      reduction: mean
+      label_smoothing: 0.1
+
   OPTIMIZER:
-    NAME: "AdamW"
-    WEIGHT_DECAY: 0.01
+    NAME: AdamW
+    PARAMS:
+      weight_decay: 0.01
+      betas: [0.9, 0.999]
+      amsgrad: false
+
   SCHEDULER:
-    NAME: "StepLR"
-    STEP_SIZE: 100
-    GAMMA: 0.1
+    NAME: CosineAnnealingWarmRestarts
+    PARAMS:
+      T_0: 10
+      T_mult: 2
+      eta_min: 0.01
+      last_epoch: -1
   ###################################################################################################################################
 
 MODEL:
