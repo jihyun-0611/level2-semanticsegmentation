@@ -4,14 +4,14 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.nn import functional as F
 #import torchvision.models as models
-import torch.optim as optim
-import torch.optim.lr_scheduler as lr_scheduler
 from tqdm import tqdm
-import pandas as pd
 import os
 
 from utils.utils import set_seed, save_model, wandb_model_log, save_csv
 from utils.metrics import dice_coef, encode_mask_to_rle
+from utils.optimizer import get_optimizer
+from utils.scheduler import get_scheduler
+from utils.loss import get_loss
 from data.dataset import XRayDataset
 from data.augmentation import DataTransforms
 import models
@@ -19,7 +19,6 @@ import models
 from config.config import Config
 
 from torch.cuda.amp import autocast, GradScaler
-import segmentation_models_pytorch as smp
 
 import wandb
 import argparse
@@ -113,25 +112,35 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
     best_rles = None
     scaler = GradScaler() if config.TRAIN.FP16 else None
     
+    if hasattr(config.TRAIN, 'ACCUMULATION_STEPS'):
+        accumulation_steps = config.TRAIN.ACCUMULATION_STEPS
+    else:
+        accumulation_steps = 1
+
     for epoch in range(config.TRAIN.EPOCHS):
         model.train()
         current_lr = scheduler.get_last_lr()[0]  # 첫 번째 학습률을 가져옵니다.
         print(f'Epoch [{epoch+1}/{config.TRAIN.EPOCHS}] | Learning Rate: {current_lr}') 
 
+        optimizer.zero_grad()
+
         for step, (images, masks) in enumerate(data_loader):            
             images, masks = images.cuda(), masks.cuda()
             model = model.cuda()
-            optimizer.zero_grad()
 
             if config.TRAIN.FP16:
                 # FP16 사용 시
                 with autocast():
                     outputs = model(images)
                     loss = criterion(outputs, masks)
+                    loss = loss / accumulation_steps
                 
                 scaler.scale(loss).backward()
-                scaler.step(optimizer)
-                scaler.update()
+                if (step+1) % accumulation_steps == 0 or (step + 1) == len(data_loader):
+                    scaler.step(optimizer)
+                    scaler.update()
+                    optimizer.zero_grad()
+
             else:
                 # FP32 사용 시
                 outputs = model(images)
@@ -146,9 +155,9 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
                     f'{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | '
                     f'Epoch [{epoch+1}/{config.TRAIN.EPOCHS}], '
                     f'Step [{step+1}/{len(data_loader)}], '
-                    f'Loss: {round(loss.item(),4)}'
+                    f'Loss: {round(loss.item() * accumulation_steps,4)}'
                 )
-                wandb.log({"train/loss": round(loss.item(),4), "lr": current_lr, "epoch": epoch+1})
+                wandb.log({"train/loss": round(loss.item() * accumulation_steps,4), "lr": current_lr, "epoch": epoch+1})
                 
         scheduler.step()
         
@@ -172,12 +181,14 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
     wandb.finish()
     
 def main():
-    tf_train = DataTransforms.get_transforms("train")
-    tf_valid = DataTransforms.get_transforms("valid")
+    data_transforms = DataTransforms(config)
+
+    tf_train = data_transforms.get_transforms("train")
+    tf_valid = data_transforms.get_transforms("valid")
     
     train_dataset = XRayDataset(is_train=True, transforms=tf_train, config=config)
     valid_dataset = XRayDataset(is_train=False, transforms=tf_valid, config=config)
-    
+
     train_loader = DataLoader(
         dataset=train_dataset, 
         batch_size=config.TRAIN.BATCH_SIZE,
@@ -199,39 +210,9 @@ def main():
     model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
     model = model_class(config)
 
-    # Loss function config화 (YAML에 인자가 없으면 원래 코드가 작동 됨.)
-    if hasattr(config.TRAIN, 'LOSS'):
-        criterion = getattr(nn, config.TRAIN.LOSS.NAME)()
-    else:
-        criterion = nn.BCEWithLogitsLoss()
-
-    # Optimizer
-    if hasattr(config.TRAIN, 'OPTIMIZER'):
-        optimizer = getattr(optim, config.TRAIN.OPTIMIZER.NAME)(
-            params=model.parameters(), 
-            lr=config.TRAIN.LR, 
-            weight_decay=config.TRAIN.OPTIMIZER.WEIGHT_DECAY
-        )
-    else:
-        optimizer = optim.AdamW(
-            params=model.parameters(), 
-            lr=config.TRAIN.LR, 
-            weight_decay=1e-2
-        )
-
-    # Scheduler
-    if hasattr(config.TRAIN, 'SCHEDULER'):
-        scheduler = getattr(lr_scheduler, config.TRAIN.SCHEDULER.NAME)(
-            optimizer,
-            step_size=config.TRAIN.SCHEDULER.STEP_SIZE,
-            gamma=config.TRAIN.SCHEDULER.GAMMA
-        )
-    else:
-        scheduler = lr_scheduler.StepLR(
-            optimizer, 
-            step_size=100, 
-            gamma=0.1
-        )
+    criterion = get_loss(config)
+    optimizer = get_optimizer(config, model)
+    scheduler = get_scheduler(config, optimizer)
 
     # 학습 시작
     set_seed(config)
@@ -239,5 +220,7 @@ def main():
 
 if __name__ == '__main__':
     args = parse_args()
+
     config = Config(args.config)
+    
     main()

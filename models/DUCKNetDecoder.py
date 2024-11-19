@@ -12,13 +12,13 @@ import segmentation_models_pytorch as smp
 class DUCKNetDecoder(BaseModel):
     def __init__(self, config):
         super(DUCKNetDecoder, self).__init__()
+        params = config.MODEL.PARAMS
 
         # SMP Encoder 설정
-        self.encoder = smp.Unet(encoder_name="timm-efficientnet-b8", encoder_weights="imagenet").encoder
+        self.encoder = smp.Unet(encoder_name=params.BACKBONE, encoder_weights="imagenet").encoder
         encoder_channels = self.encoder.out_channels
 
 
-        params = config.MODEL.PARAMS
         self.starting_filters = 34
         self.input_channels = params.IN_CHANNELS
         self.classes = params.OUT_CHANNELS
