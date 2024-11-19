@@ -181,12 +181,14 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
     wandb.finish()
     
 def main():
-    tf_train = DataTransforms.get_transforms("train")
-    tf_valid = DataTransforms.get_transforms("valid")
+    data_transforms = DataTransforms(config)
+
+    tf_train = data_transforms.get_transforms("train")
+    tf_valid = data_transforms.get_transforms("valid")
     
     train_dataset = XRayDataset(is_train=True, transforms=tf_train, config=config)
     valid_dataset = XRayDataset(is_train=False, transforms=tf_valid, config=config)
-    
+
     train_loader = DataLoader(
         dataset=train_dataset, 
         batch_size=config.TRAIN.BATCH_SIZE,
