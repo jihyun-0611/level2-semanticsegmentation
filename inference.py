@@ -11,7 +11,6 @@ from utils.metrics import encode_mask_to_rle
 from data.augmentation import DataTransforms
 import models 
 
-import segmentation_models_pytorch as smp
 import argparse
 
 def parse_args():
@@ -55,7 +54,8 @@ def main(config):
         model.load_state_dict(torch.load(model_path))
         print(f"에러로 인해 get_model()을 사용하여 모델을 로드합니다.")
     
-    tf = DataTransforms.get_transforms("valid")
+    data_transforms = DataTransforms(config)
+    tf = data_transforms.get_transforms("valid")
 
     test_dataset = XRayInferenceDataset(transforms=tf, config=config)
     test_loader = DataLoader(
