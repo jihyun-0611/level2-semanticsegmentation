@@ -4,10 +4,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.nn import functional as F
 #import torchvision.models as models
-import torch.optim as optim
-import torch.optim.lr_scheduler as lr_scheduler
 from tqdm import tqdm
-import pandas as pd
 import os
 
 from utils.utils import set_seed, save_model, wandb_model_log, save_csv
@@ -19,11 +16,9 @@ from data.dataset import XRayDataset
 from data.augmentation import DataTransforms
 import models
 
-
 from config.config import Config
 
 from torch.cuda.amp import autocast, GradScaler
-import segmentation_models_pytorch as smp
 
 import wandb
 import argparse
@@ -224,12 +219,6 @@ def main():
 if __name__ == '__main__':
     args = parse_args()
 
-    DEFAULT_TRAIN_CONFIG = {
-    "LOSS": {"NAME": "BCEWithLogitsLoss", "PARAMS": {}},
-    "OPTIMIZER": {"NAME": "AdamW", "PARAMS": {"weight_decay": 0.01}},
-    "SCHEDULER": {"NAME": "StepLR", "PARAMS": {"step_size": 100, "gamma": 0.1}},
-    }
-
-    config = Config(args.config, DEFAULT_TRAIN_CONFIG)
+    config = Config(args.config)
     
     main()
