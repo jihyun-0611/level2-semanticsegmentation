@@ -12,6 +12,7 @@
 - **업로드 지침**: 실험이 완료된 후, 다른 팀원이 참고 및 구현할 수 있도록 YAML 파일을 GitHub에 업로드해 주세요. 
 
     (⚠️ 다시 말씀드리지만, 반드시 `experiments/completed` 폴더에 넣어주세요.)
+- **LOSS, SCHEDULER, OPTIMIZER 관련** : LOSS, SCHEDULER, OPTIMIZER의 파라미터는 PARAM 인자 밑에 작성해주셔야 합니다. 그렇지 않으면 train.py의 DEFAULT_TRAIN_CONFIG의 파라미터로 실행될 수 있습니다.
 
 ## 실험 실행 방법
 
