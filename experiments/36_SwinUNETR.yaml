@@ -1,0 +1,96 @@
+DATA:
+  IMAGE_ROOT: "/data/ephemeral/home/data/train/DCM" # 학습 이미지 디렉토리 경로
+  LABEL_ROOT: "/data/ephemeral/home/data/train/outputs_json" # 학습 json 디렉토리 경로
+  TEST_IMAGE_ROOT: "/data/ephemeral/home/data/test/DCM" # 테스트 이미지 디렉토리 경로
+  CLASSES: [
+      'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
+      'finger-6', 'finger-7', 'finger-8', 'finger-9', 'finger-10',
+      'finger-11', 'finger-12', 'finger-13', 'finger-14', 'finger-15',
+      'finger-16', 'finger-17', 'finger-18', 'finger-19', 'Trapezium',
+      'Trapezoid', 'Capitate', 'Hamate', 'Scaphoid', 'Lunate',
+      'Triquetrum', 'Pisiform', 'Radius', 'Ulna',
+  ]
+
+TRAIN: &train_settings
+  BATCH_SIZE: 8
+  VAL_EVERY: 5
+  EPOCHS: 50
+  LR: 0.001
+  RANDOM_SEED: 21 # 랜덤 시드
+  FP16: True # FP16 사용 여부
+  OUTPUT_DIR: "./train"
+  CSV_NAME: "validation_36_SwinUNETR.csv" # 검증 결과 저장 파일 이름
+  VAL_NUM: 0
+  ACCUMULATION_STEPS: 1
+  PRETRAIN: 
+    USE_PRETRAINED: False
+    MODEL_PATH: ""
+  ######################################################################################################################################################
+  ## LOSS, OPTIMIZER, SCHEDULER의 파라미터는 PARAMS 밑에 적어주셔야 합니다.
+  ## LOSS, OPTIMIZER, SCHEDULER가 없으면 Train.py의 DEFAULT_TRAIN_CONFIG 설정으로 학습됩니다. LOSS, OPTIMIZER, SCHEDULER 없이 학습하실 때, 밑에 관련 설정을 작성해주세요.
+  ## LOSS : 관련 설정을 적어주세요
+  ## OPTIMIZER : 관련 설정을 적어주세요
+  ## SCHEDULER : 관련 설정을 적어주세요
+  ######################################################################################################################################################
+  LOSS:
+    NAME: BCEWithLogitsLoss
+
+  OPTIMIZER:
+    NAME: AdamW
+    PARAMS:
+      weight_decay: 0.01
+      betas: [0.9, 0.999]
+      amsgrad: false
+
+  SCHEDULER:
+    NAME: CosineAnnealingLR
+    PARAMS:
+      T_max: 50  # epoch 수와 동일
+      eta_min: 0.00001
+  ###################################################################################################################################
+  TRANSFORMS:
+    - NAME: Resize
+      PARAMS:
+        height: 768
+        width: 768
+    - NAME: HorizontalFlip
+      PARAMS:
+        p: 0.5
+    - NAME: Rotate
+      PARAMS:
+        limit: 45
+        p: 0.5
+
+MODEL:
+  TYPE: "SwinUNETR" # train 혹은 inference 시 사용할 모델명
+  SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
+  MODEL_NAME: "36_SwinUNETR.pt" # 모델 가중치 이름 (train 시 저장되는 모델 가중치 이름, inference 시 불러오는 모델 가중치 이름)
+  PARAMS:
+    HEIGHT: 768
+    WIDTH: 768
+    IN_CHANNELS: 3
+    OUT_CHANNELS: 29
+    FEATURE_SIZE: 72
+    USE_CHECKPOINT: True
+    DROP_RATE: 0.0
+    ATTN_DROP_RATE: 0.0
+    DROPOUT_PATH_RATE: 0.0
+
+INFERENCE:
+  OUTPUT_DIR: "./inference" # 추론 결과 저장 디렉토리
+  CSV_NAME: "36_SwinUNETR.csv" # 추론 결과 저장 파일 이름
+  ## Validation 및 inference에 사용할 데이터 증강
+  TRANSFORMS:
+    - NAME: Resize
+      PARAMS:
+        height: 768
+        width: 768
+
+WANDB:
+  PROJECT_NAME: "semantic-segmentation"
+  ENTITY: "lv2-ss-"
+  RUN_NAME: "36_SwinUNETR" # 실험 이름 바꿔줘요.
+  NOTES: "train SwinUNETR with base setting" # 특이사항 혹은 tag로 설명이 안되면 추가해주시면 됩니다. 
+  TAGS: ["SwinUNETR", "monai", "AdamW"]
+  CONFIGS: *train_settings
+  WATCH_STEP: 5 # 5 epoch마다 wandb에 gradients/parameters 시각화
