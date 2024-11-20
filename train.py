@@ -208,7 +208,12 @@ def main():
 
     # model 불러오기
     model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
-    model = model_class(config)
+    model = model_class(config).get_model()
+
+    if config.TRAIN.PRETRAIN.USE_PRETRAINED:
+        state_dict = torch.load(config.TRAIN.PRETRAIN.MODEL_PATH)
+        model.load_state_dict(state_dict)
+        print(f"Pretrained model load from {config.TRAIN.PRETRAIN.MODEL_PATH}")
 
     criterion = get_loss(config)
     optimizer = get_optimizer(config, model)
