@@ -12,7 +12,7 @@ class DUCKNet(BaseModel):
     def __init__(self, config):
         super(DUCKNet, self).__init__()
         params = config.MODEL.PARAMS
-        self.starting_filters = 17
+        self.starting_filters = 34
         self.input_channels = params.IN_CHANNELS
         self.classes = params.OUT_CHANNELS
 

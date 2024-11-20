@@ -22,6 +22,9 @@ TRAIN: &train_settings
   CSV_NAME: "base_config.csv" # 검증 결과 저장 파일 이름
   VAL_NUM: 0
   ACCUMULATION_STEPS: 1
+  PRETRAIN: 
+    USE_PRETRAINED: True
+    MODEL_PATH: "/data/ephemeral/home/saved_model/DUCKNet_best_model.pt"
   ######################################################################################################################################################
   ## LOSS, OPTIMIZER, SCHEDULER의 파라미터는 PARAMS 밑에 적어주셔야 합니다.
   ## LOSS, OPTIMIZER, SCHEDULER가 없으면 Train.py의 DEFAULT_TRAIN_CONFIG 설정으로 학습됩니다. LOSS, OPTIMIZER, SCHEDULER 없이 학습하실 때, 밑에 관련 설정을 작성해주세요.
