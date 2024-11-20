@@ -19,9 +19,8 @@ threshold: 0.55
 model_paths:
   512: []
   1024: 
-    - /data/ephemeral/home/taeuk/level2-cv-semanticsegmentation-cv-04-lv3/ensemble/duck_0023.pt
-    - /data/ephemeral/home/taeuk/level2-cv-semanticsegmentation-cv-04-lv3/ensemble/duck_0033.pt
-    - /data/ephemeral/home/taeuk/level2-cv-semanticsegmentation-cv-04-lv3/ensemble/upp_e8.pt
+    - /data/ephemeral/home/taeuk/level2-cv-semanticsegmentation-cv-04-lv3/experiments/ensemble_23.1_Finetune_DUCKNet_explr.yaml
+    - /data/ephemeral/home/taeuk/level2-cv-semanticsegmentation-cv-04-lv3/experiments/ensemble_31.4_Finetune_EffiSegNet.yaml
   1536: []
   2048: []
 

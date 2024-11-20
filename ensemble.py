@@ -16,7 +16,8 @@ from torch.utils.data import Dataset, DataLoader
 import warnings
 warnings.filterwarnings('ignore')
 
-from models import UNet, DeepLabV3Plus, fpn, linknet, manet, pan, PSPNet, unetplusplus, DUCKNet, DUCKNetDecoder
+import models
+
 class EnsembleDataset(Dataset):
     """
     Soft Voting을 위한 DataSet 클래스입니다. 이 클래스는 이미지를 로드하고 전처리하는 작업과
@@ -133,36 +134,24 @@ def load_models(cfg, device):
         for path in paths:
             print(f"{osp.basename(path)} 모델을 불러오는 중입니다..", end="\t")
             # 모델 구조를 정의한 후 가중치를 로드합니다.
-            if cfg.MODEL.TYPE == "UNet":
-                model = UNet()
-            elif cfg.MODEL.TYPE == "DeepLabV3Plus":
-                model = DeepLabV3Plus()
-            elif cfg.MODEL.TYPE == "fpn":
-                model = fpn()
-            elif cfg.MODEL.TYPE == "linknet":
-                model = linknet()
-            elif cfg.MODEL.TYPE == "manet":
-                model = manet()
-            elif cfg.MODEL.TYPE == "pan":
-                model = pan()
-            elif cfg.MODEL.TYPE == "PSPNet":
-                model = PSPNet()
-            elif cfg.MODEL.TYPE == "unetplusplus":
-                model = unetplusplus()
-            elif cfg.MODEL.TYPE == "DUCKNet":
-                model = DUCKNet()
-            elif cfg.MODEL.TYPE == "DUCKNetDecoder":
-                model = DUCKNetDecoder()
-            else:
-                raise ValueError(f"Invalid model type: {cfg.MODEL.TYPE}")
-            
-            # 모델 클래스 이름으로 변경하세요.
-            model.load_state_dict(torch.load(path))
-            model.to(device)
-            model.eval()
-            model_dict[key].append(model)
-            model_count += 1
-            print("불러오기 성공!")
+            try:
+                with open(path, 'r') as f:
+                    con = OmegaConf.load(f)
+                model_class = getattr(models, con.MODEL.TYPE)  # models에서 모델 클래스 가져오기
+                model = model_class(con).get_model()
+                
+                state_dict = torch.load(con.TRAIN.PRETRAIN.MODEL_PATH)
+                model.load_state_dict(state_dict)
+                
+                model.to(device)
+                model.eval()
+                model_dict[key].append(model)
+                model_count += 1
+                print("불러오기 성공!")
+            except Exception as e:
+                with open("error_log.txt", "a") as error_file:
+                    error_file.write(f"Error loading model from {path}: {str(e)}\n")
+                print(f"오류 발생: {str(e)}")
         print()
 
     print(f"모델 총 {model_count}개 불러오기 성공!\n")
