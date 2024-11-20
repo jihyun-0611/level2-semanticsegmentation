@@ -66,7 +66,7 @@ def validation(epoch, model, data_loader, criterion, thr=0.5):
 
             # save validation outputs (rles) to 'result_rles' 
             dataset = data_loader.dataset
-            batch_filenames = [dataset.filenames[i] for i in range(step * data_loader.batch_size, (step + 1) * data_loader.batch_size)]
+            batch_filenames = [dataset.filenames[i] for i in range(step * data_loader.batch_size, min((step + 1) * data_loader.batch_size, len(dataset.filenames)))]
     
             for output, image_name in zip(outputs, batch_filenames):
                 for c, segm in enumerate(output):
