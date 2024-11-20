@@ -14,14 +14,14 @@ CLASSES: [
 batch_size: 2
 num_workers: 2
 
-threshold: 0.5
+threshold: 0.55
 
 model_paths:
   512: []
   1024: 
-    - /data/ephemeral/home/level2-cv-semanticsegmentation-cv-04-lv3/ensemble/9699.pt
-    - /data/ephemeral/home/level2-cv-semanticsegmentation-cv-04-lv3/ensemble/9687.pt
-    - /data/ephemeral/home/level2-cv-semanticsegmentation-cv-04-lv3/ensemble/9686.pt
+    - /data/ephemeral/home/taeuk/level2-cv-semanticsegmentation-cv-04-lv3/ensemble/duck_0023.pt
+    - /data/ephemeral/home/taeuk/level2-cv-semanticsegmentation-cv-04-lv3/ensemble/duck_0033.pt
+    - /data/ephemeral/home/taeuk/level2-cv-semanticsegmentation-cv-04-lv3/ensemble/upp_e8.pt
   1536: []
   2048: []
 

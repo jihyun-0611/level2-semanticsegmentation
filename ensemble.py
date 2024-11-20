@@ -16,7 +16,7 @@ from torch.utils.data import Dataset, DataLoader
 import warnings
 warnings.filterwarnings('ignore')
 
-
+from models import UNet, DeepLabV3Plus, fpn, linknet, manet, pan, PSPNet, unetplusplus, DUCKNet, DUCKNetDecoder
 class EnsembleDataset(Dataset):
     """
     Soft Voting을 위한 DataSet 클래스입니다. 이 클래스는 이미지를 로드하고 전처리하는 작업과
@@ -123,6 +123,7 @@ def load_models(cfg, device):
     model_count = 0
 
     print("\n======== Model Load ========")
+    print(cfg.model_paths.items())
     # inference 해야하는 이미지 크기 별로 모델 순차저장
     for key, paths in cfg.model_paths.items():
         if len(paths) == 0:
@@ -131,7 +132,33 @@ def load_models(cfg, device):
         print(f"{key} image size 추론 모델 {len(paths)}개 불러오기 진행 시작")
         for path in paths:
             print(f"{osp.basename(path)} 모델을 불러오는 중입니다..", end="\t")
-            model = torch.load(path).to(device)
+            # 모델 구조를 정의한 후 가중치를 로드합니다.
+            if cfg.MODEL.TYPE == "UNet":
+                model = UNet()
+            elif cfg.MODEL.TYPE == "DeepLabV3Plus":
+                model = DeepLabV3Plus()
+            elif cfg.MODEL.TYPE == "fpn":
+                model = fpn()
+            elif cfg.MODEL.TYPE == "linknet":
+                model = linknet()
+            elif cfg.MODEL.TYPE == "manet":
+                model = manet()
+            elif cfg.MODEL.TYPE == "pan":
+                model = pan()
+            elif cfg.MODEL.TYPE == "PSPNet":
+                model = PSPNet()
+            elif cfg.MODEL.TYPE == "unetplusplus":
+                model = unetplusplus()
+            elif cfg.MODEL.TYPE == "DUCKNet":
+                model = DUCKNet()
+            elif cfg.MODEL.TYPE == "DUCKNetDecoder":
+                model = DUCKNetDecoder()
+            else:
+                raise ValueError(f"Invalid model type: {cfg.MODEL.TYPE}")
+            
+            # 모델 클래스 이름으로 변경하세요.
+            model.load_state_dict(torch.load(path))
+            model.to(device)
             model.eval()
             model_dict[key].append(model)
             model_count += 1
