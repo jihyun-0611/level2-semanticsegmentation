@@ -49,10 +49,6 @@ TRAIN: &train_settings
       eta_min: 0.00001
   ###################################################################################################################################
   TRANSFORMS:
-    - NAME: Resize
-      PARAMS:
-        height: 768
-        width: 768
     - NAME: HorizontalFlip
       PARAMS:
         p: 0.5
@@ -60,13 +56,17 @@ TRAIN: &train_settings
       PARAMS:
         limit: 45
         p: 0.5
+    - NAME: Resize
+      PARAMS:
+        height: 768
+        width: 768
 
 MODEL:
   TYPE: "SwinUNETR" # train 혹은 inference 시 사용할 모델명
   SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
   MODEL_NAME: "36_SwinUNETR.pt" # 모델 가중치 이름 (train 시 저장되는 모델 가중치 이름, inference 시 불러오는 모델 가중치 이름)
   PARAMS:
-    HEIGHT: 768
+    HEIGHT: 768 # Resize와 동일하게 
     WIDTH: 768
     IN_CHANNELS: 3
     OUT_CHANNELS: 29
