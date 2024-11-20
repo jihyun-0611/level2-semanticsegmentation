@@ -44,15 +44,35 @@ def test(model, data_loader, thr=0.5):
 
 def main(config):
     model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
-    try:
-        model = model_class(config).get_model()
-        model_path=os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
-        model.load_state_dict(torch.load(model_path))
-    except Exception as e:
-        model = model_class(config)
-        model_path=os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
-        model.load_state_dict(torch.load(model_path))
-        print(f"에러로 인해 get_model()을 사용하여 모델을 로드합니다.")
+    if config.INFERENCE.INFERENCE_SWA:
+        try:
+            model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
+            model = model_class(config)
+            model_path=os.path.join(config.MODEL.SAVED_DIR, config.TRAIN.SWA.MODEL_NAME)
+
+            state_dict = torch.load(model_path)
+            state_dict = {key.replace('module.', ''): value for key, value in state_dict.items()}
+            state_dict = {key: value for key, value in state_dict.items() if 'n_averaged' not in key}
+            model.load_state_dict(state_dict)
+        except Exception as e:
+            model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
+            model = model_class(config).get_model()
+            model_path=os.path.join(config.MODEL.SAVED_DIR, config.TRAIN.SWA.MODEL_NAME)
+
+            state_dict = torch.load(model_path)
+            state_dict = {key.replace('module.', ''): value for key, value in state_dict.items()}
+            state_dict = {key: value for key, value in state_dict.items() if 'n_averaged' not in key}
+            model.load_state_dict(state_dict)
+    else:
+        try:
+            model = model_class(config).get_model()
+            model_path=os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
+            model.load_state_dict(torch.load(model_path))
+        except Exception as e:
+            model = model_class(config)
+            model_path=os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
+            model.load_state_dict(torch.load(model_path))
+            print(f"에러로 인해 get_model()을 사용하여 모델을 로드합니다.")
     
     data_transforms = DataTransforms(config)
     tf = data_transforms.get_transforms("valid")
