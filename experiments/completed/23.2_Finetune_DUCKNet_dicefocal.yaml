@@ -1,0 +1,76 @@
+DATA:
+  IMAGE_ROOT: "/data/ephemeral/home/new_data_v1.0/train/DCM" # 학습 이미지 디렉토리 경로
+  LABEL_ROOT: "/data/ephemeral/home/new_data_v1.0/train/outputs_json" # 학습 json 디렉토리 경로
+  TEST_IMAGE_ROOT: "/data/ephemeral/home/data/test/DCM" # 테스트 이미지 디렉토리 경로
+  CLASSES: [
+      'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
+      'finger-6', 'finger-7', 'finger-8', 'finger-9', 'finger-10',
+      'finger-11', 'finger-12', 'finger-13', 'finger-14', 'finger-15',
+      'finger-16', 'finger-17', 'finger-18', 'finger-19', 'Trapezium',
+      'Trapezoid', 'Capitate', 'Hamate', 'Scaphoid', 'Lunate',
+      'Triquetrum', 'Pisiform', 'Radius', 'Ulna',
+  ]
+
+TRAIN: &train_settings
+  BATCH_SIZE: 1
+  VAL_EVERY: 5
+  EPOCHS: 30 
+  LR: 0.0001
+  RANDOM_SEED: 21 # 랜덤 시드
+  FP16: True # FP16 사용 여부
+  OUTPUT_DIR: "./train"
+  CSV_NAME: "validation_Finetune_DUCKNet_dicefocal_output.csv"
+  VAL_NUM: 0
+  ACCUMULATION_STEPS: 2
+  PRETRAIN: 
+    USE_PRETRAINED: True
+    MODEL_PATH: "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-04-lv3/saved_model/Finetune_DUCKNet_explr_best_model.pt"
+  LOSS:
+    NAME: "DiceFocalLoss"
+    PARAMS:
+      sigmoid: True
+
+  OPTIMIZER:
+    NAME: AdamW
+    PARAMS:
+      weight_decay: 0.01
+
+  SCHEDULER:
+    NAME: ExponentialLR
+    PARAMS:
+      gamma: 0.95
+
+  TRANSFORMS:
+    - NAME: Resize
+      PARAMS:
+        height: 1024
+        width: 1024
+    - NAME: Affine
+      PARAMS:
+        rotate: [-30, 30]
+
+MODEL:
+  TYPE: "DUCKNet"  # 사용할 모델명
+  SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
+  MODEL_NAME: "Finetune_DUCKNet_dicefocal_best_model.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
+  PARAMS:
+    IN_CHANNELS: 3
+    OUT_CHANNELS: 29
+
+INFERENCE:
+  OUTPUT_DIR: "./inference" # 추론 결과 저장 디렉토리
+  CSV_NAME: "Finetune_DUCKNet_dicefocal_output.csv" # 추론 결과 저장 파일 이름
+  TRANSFORMS:
+  - NAME: Resize
+    PARAMS:
+      height: 1024
+      width: 1024
+
+WANDB:
+  PROJECT_NAME: "semantic-segmentation"
+  ENTITY: "lv2-ss-"
+  RUN_NAME: "Finetune_DUCKNet_dicefocal" # 실험 이름 바꿔줘요.
+  NOTES: "Finetune DUCKNet dicefocal loss" # 특이사항 혹은 tag로 설명이 안되면 추가해주시면 됩니다. 
+  TAGS: ["DUCKNet", "weights: 23.1_DUCKNet", "AdamW", "ExponentialLR", "dicefocal"]
+  CONFIGS: *train_settings
+  WATCH_STEP: 5 # 5 epoch마다 wandb에 gradients/parameters 시각화
