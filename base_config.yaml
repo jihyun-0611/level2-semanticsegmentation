@@ -25,6 +25,12 @@ TRAIN: &train_settings
   PRETRAIN: 
     USE_PRETRAINED: True
     MODEL_PATH: "/data/ephemeral/home/saved_model/DUCKNet_best_model.pt"
+  SWA:  # SWA 사용 여부 사용 안하실거면 주석처리 해주세요
+    START: 20 # SWA 시작 EPOCH
+    LR: 0.001 # SWA 최종 LR
+    ANNEAL_EPOCHS: 10 # SWA 에폭, 해당 에폭이 지나면 위에 설정한 LR로 고정이 됨
+    STRATEGY: 'cos' # 'cos' or 'linear' 감소 방법, 시작 학습률은 기존 설정한 학습률
+    MODEL_NAME: "SWA_base_config.pt" # 저장할 모델 이름
   ######################################################################################################################################################
   ## LOSS, OPTIMIZER, SCHEDULER의 파라미터는 PARAMS 밑에 적어주셔야 합니다.
   ## LOSS, OPTIMIZER, SCHEDULER가 없으면 Train.py의 DEFAULT_TRAIN_CONFIG 설정으로 학습됩니다. LOSS, OPTIMIZER, SCHEDULER 없이 학습하실 때, 밑에 관련 설정을 작성해주세요.
@@ -82,6 +88,7 @@ MODEL:
 INFERENCE:
   OUTPUT_DIR: "./inference" # 추론 결과 저장 디렉토리
   CSV_NAME: "base_config.csv" # 추론 결과 저장 파일 이름
+  INFERENCE_SWA: false
   ## Validation 및 inference에 사용할 데이터 증강
   TRANSFORMS:
     - NAME: Resize
