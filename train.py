@@ -23,6 +23,8 @@ from torch.cuda.amp import autocast, GradScaler
 import wandb
 import argparse
 
+from torch.optim.swa_utils import AveragedModel, SWALR
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, default='config.yaml')
@@ -66,7 +68,7 @@ def validation(epoch, model, data_loader, criterion, thr=0.5):
 
             # save validation outputs (rles) to 'result_rles' 
             dataset = data_loader.dataset
-            batch_filenames = [dataset.filenames[i] for i in range(step * data_loader.batch_size, (step + 1) * data_loader.batch_size)]
+            batch_filenames = [dataset.filenames[i] for i in range(step * data_loader.batch_size, min((step + 1) * data_loader.batch_size, len(dataset.filenames)))]
     
             for output, image_name in zip(outputs, batch_filenames):
                 for c, segm in enumerate(output):
@@ -111,6 +113,15 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
     best_dice, best_dice_epoch = 0., 0.
     best_rles = None
     scaler = GradScaler() if config.TRAIN.FP16 else None
+
+    if hasattr(config.TRAIN, 'SWA'):
+        swa_model = AveragedModel(model).cuda()
+        swa_start = config.TRAIN.SWA.START
+        swa_scheduler = SWALR(optimizer=optimizer, 
+                              swa_lr=config.TRAIN.SWA.LR, 
+                              anneal_epochs=config.TRAIN.SWA.ANNEAL_EPOCHS,
+                              anneal_strategy=config.TRAIN.SWA.STRATEGY)
+
     
     if hasattr(config.TRAIN, 'ACCUMULATION_STEPS'):
         accumulation_steps = config.TRAIN.ACCUMULATION_STEPS
@@ -158,8 +169,15 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
                     f'Loss: {round(loss.item() * accumulation_steps,4)}'
                 )
                 wandb.log({"train/loss": round(loss.item() * accumulation_steps,4), "lr": current_lr, "epoch": epoch+1})
-                
-        scheduler.step()
+
+        if hasattr(config.TRAIN, 'SWA'):
+            if epoch+1 >= swa_start:
+                swa_model.update_parameters(model)
+                swa_scheduler.step()
+            else:
+                scheduler.step()
+        else:    
+            scheduler.step()
         
         
         # validation 주기에 따라 loss를 출력하고 best model을 저장합니다.
@@ -174,9 +192,17 @@ def train(model, data_loader, val_loader, criterion, optimizer, scheduler):
                 best_rles = rles
                 save_model(config, model)
                 wandb_model_log(config)
-                
+    
     if best_rles:
         save_csv(config, best_rles, mode='TRAIN', epoch=best_dice_epoch)
+
+    if hasattr(config.TRAIN, 'SWA'):
+        torch.optim.swa_utils.update_bn(data_loader, swa_model, device="cuda")
+
+        output_path = os.path.join(config.MODEL.SAVED_DIR, config.TRAIN.SWA.MODEL_NAME)
+        if not os.path.exists(config.MODEL.SAVED_DIR):
+            os.makedirs(config.MODEL.SAVED_DIR)
+        torch.save(swa_model.state_dict(), output_path)
         
     wandb.finish()
     

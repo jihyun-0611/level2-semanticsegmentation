@@ -12,25 +12,25 @@ DATA:
   ]
 
 TRAIN: &train_settings
-  BATCH_SIZE: 8
-  VAL_EVERY: 5
-  EPOCHS: 1
-  LR: 0.005
+  BATCH_SIZE: 2
+  VAL_EVERY: 3
+  EPOCHS: 30
+  LR: 0.003
   RANDOM_SEED: 21 # 랜덤 시드
   FP16: True # FP16 사용 여부
   OUTPUT_DIR: "./train"
   CSV_NAME: "base_config.csv" # 검증 결과 저장 파일 이름
-  VAL_NUM: 0
+  VAL_NUM: 3
   ACCUMULATION_STEPS: 1
   PRETRAIN: 
     USE_PRETRAINED: True
-    MODEL_PATH: "/data/ephemeral/home/saved_model/DUCKNet_best_model.pt"
+    MODEL_PATH: "/data/ephemeral/home/sangyu/saved_model/UPP_E8_1024.pt"
   SWA:  # SWA 사용 여부 사용 안하실거면 주석처리 해주세요
     START: 20 # SWA 시작 EPOCH
     LR: 0.001 # SWA 최종 LR
     ANNEAL_EPOCHS: 10 # SWA 에폭, 해당 에폭이 지나면 위에 설정한 LR로 고정이 됨
     STRATEGY: 'cos' # 'cos' or 'linear' 감소 방법, 시작 학습률은 기존 설정한 학습률
-    MODEL_NAME: "SWA_base_config.pt" # 저장할 모델 이름
+    MODEL_NAME: "SWA_Upp_E8_TverFocal.pt" # 저장할 모델 이름
   ######################################################################################################################################################
   ## LOSS, OPTIMIZER, SCHEDULER의 파라미터는 PARAMS 밑에 적어주셔야 합니다.
   ## LOSS, OPTIMIZER, SCHEDULER가 없으면 Train.py의 DEFAULT_TRAIN_CONFIG 설정으로 학습됩니다. LOSS, OPTIMIZER, SCHEDULER 없이 학습하실 때, 밑에 관련 설정을 작성해주세요.
@@ -39,55 +39,43 @@ TRAIN: &train_settings
   ## SCHEDULER : 관련 설정을 적어주세요
   ######################################################################################################################################################
   LOSS:
-    NAME: CrossEntropyLoss
-    PARAMS:
-      reduction: mean
-      label_smoothing: 0.1
+    NAME: TverskyLoss + FocalLoss
 
-  OPTIMIZER:
-    NAME: AdamW
-    PARAMS:
-      weight_decay: 0.01
-      betas: [0.9, 0.999]
-      amsgrad: false
+  # OPTIMIZER:
+  #   NAME: AdamW
+  #   PARAMS:
+  #     weight_decay: 0.01
+  #     betas: [0.9, 0.999]
+  #     amsgrad: false
 
   SCHEDULER:
-    NAME: CosineAnnealingWarmRestarts
+    NAME: ExponentialLR
     PARAMS:
-      T_0: 10
-      T_mult: 2
-      eta_min: 0.01
-      last_epoch: -1
+      gamma: 0.90
   ###################################################################################################################################
   TRANSFORMS:
     - NAME: Resize
       PARAMS:
         height: 1024
         width: 1024
-    - NAME: ElasticTransform
+    - NAME: Affine
       PARAMS:
-        alpha: 1
-        sigma: 50
-        p: 0.2
-    - NAME: RandomBrightnessContrast
-      PARAMS:
-        brightness_limit: 0.2
-        contrast_limit: 0.2
-        p: 0.5
+        rotate: [-30, 30]
 
 
 MODEL:
-  TYPE: "UNet" # train 혹은 inference 시 사용할 모델명
+  TYPE: "unetplusplus"  # 사용할 모델명
   SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
-  MODEL_NAME: "base_config.pt" # 모델 가중치 이름 (train 시 저장되는 모델 가중치 이름, inference 시 불러오는 모델 가중치 이름)
+  MODEL_NAME: "Upp_E8_TverFocal.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
   PARAMS:
-    BACKBONE: "efficientnet-b0"
+    BACKBONE: "timm-efficientnet-b8"
+    OUTPUT_STRIDE: 16
     IN_CHANNELS: 3
     OUT_CHANNELS: 29
 
 INFERENCE:
   OUTPUT_DIR: "./inference" # 추론 결과 저장 디렉토리
-  CSV_NAME: "base_config.csv" # 추론 결과 저장 파일 이름
+  CSV_NAME: "Upp_E8_1024.csv" # 추론 결과 저장 파일 이름
   INFERENCE_SWA: false
   ## Validation 및 inference에 사용할 데이터 증강
   TRANSFORMS:
@@ -99,7 +87,7 @@ INFERENCE:
 WANDB:
   PROJECT_NAME: "semantic-segmentation"
   ENTITY: "lv2-ss-"
-  RUN_NAME: "base_config" # 실험 이름 바꿔줘요.
+  RUN_NAME: "Upp_E8_TverFocal" # 실험 이름 바꿔줘요.
   NOTES: "train baseline (UNet) with encoder weights None and lr 0.005" # 특이사항 혹은 tag로 설명이 안되면 추가해주시면 됩니다. 
   TAGS: ["UNet", "efficientnet-b0", "weights: None", "AdamW"]
   CONFIGS: *train_settings
