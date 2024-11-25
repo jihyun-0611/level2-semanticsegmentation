@@ -1,0 +1,59 @@
+
+# 사용할 앙상블 방법
+# hard_voting, soft_voting
+ensemble_type: hard_voting
+
+# root 경로
+root_path: /data/ephemeral/home/level2-cv-semanticsegmentation-cv-04-lv3
+
+hard_voting:
+  # 투표 수
+  threshold: 2
+
+  # 각 모델의 결과 csv 파일 경로
+  csv_path:
+    - ./en/output9.csv
+    - ./en/output10.csv
+    - ./en/output11.csv
+
+  # 최종 앙상블 결과 저장 경로
+  save_dir: ./hard_ensemble
+  # 최종 앙상블 결과 파일 이름
+  output_name: output_hard_ensemble_example.csv
+
+
+
+soft_voting:
+  image_root: /data/ephemeral/home/data/test/DCM
+
+  CLASSES: [
+    'finger-1', 'finger-2', 'finger-3', 'finger-4', 'finger-5',
+    'finger-6', 'finger-7', 'finger-8', 'finger-9', 'finger-10',
+    'finger-11', 'finger-12', 'finger-13', 'finger-14', 'finger-15',
+    'finger-16', 'finger-17', 'finger-18', 'finger-19', 'Trapezium',
+    'Trapezoid', 'Capitate', 'Hamate', 'Scaphoid', 'Lunate',
+    'Triquetrum', 'Pisiform', 'Radius', 'Ulna',]
+
+
+
+  # 배치 사이즈
+  batch_size: 2
+  # 데이터 로더 스레드 수
+  num_workers: 2
+
+  # 투표 임계치
+  threshold: 0.45
+
+  # 각 모델의 yaml 파일 경로
+  model_paths:
+    512: []
+    1024: 
+      - /data/ephemeral/home/level2-cv-semanticsegmentation-cv-04-lv3/ensembles/23.2_Finetune_DUCKNet_dicefocal.yaml
+      - /data/ephemeral/home/level2-cv-semanticsegmentation-cv-04-lv3/ensembles/37_Upp_HRNet_1024.yaml
+    1536: []
+    2048: []
+
+  # 최종 앙상블 결과 저장 경로
+  save_dir: ./soft_ensemble
+  # 최종 앙상블 결과 파일 이름
+  output_name: output_soft_ensemble_example.csv
