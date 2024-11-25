@@ -18,6 +18,7 @@ TRAIN: &train_settings
   LR: 0.005
   RANDOM_SEED: 21 # 랜덤 시드
   FP16: True # FP16 사용 여부
+  SLIDING_WINDOW: True
   OUTPUT_DIR: "./train"
   CSV_NAME: "base_config.csv" # 검증 결과 저장 파일 이름
   VAL_NUM: 0
