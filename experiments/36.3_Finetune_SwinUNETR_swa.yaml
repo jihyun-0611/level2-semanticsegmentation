@@ -12,7 +12,7 @@ DATA:
   ]
 
 TRAIN: &train_settings
-  BATCH_SIZE: 4
+  BATCH_SIZE: 1
   VAL_EVERY: 5
   EPOCHS: 60
   LR: 0.001
@@ -21,7 +21,7 @@ TRAIN: &train_settings
   OUTPUT_DIR: "./train"
   CSV_NAME: "validation_36_3_SwinUNETR_finetuning_swa.csv" # 검증 결과 저장 파일 이름
   VAL_NUM: 0
-  ACCUMULATION_STEPS: 2
+  ACCUMULATION_STEPS: 8
   PRETRAIN: 
     USE_PRETRAINED: True
     MODEL_PATH: "/data/ephemeral/home/lv2-ss/saved_model/36_SwinUNETR.pt"
@@ -64,16 +64,16 @@ TRAIN: &train_settings
         p: 0.5
     - NAME: Resize
       PARAMS:
-        height: 1024
-        width: 1024
+        height: 2048
+        width: 2048
 
 MODEL:
   TYPE: "SwinUNETR" # train 혹은 inference 시 사용할 모델명
   SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
   MODEL_NAME: "36_3_SwinUNETR_finetuning.pt" # 모델 가중치 이름 (train 시 저장되는 모델 가중치 이름, inference 시 불러오는 모델 가중치 이름)
   PARAMS:
-    HEIGHT: 1024 # Resize와 동일하게 
-    WIDTH: 1024
+    HEIGHT: 2048 # Resize와 동일하게 
+    WIDTH: 2048
     IN_CHANNELS: 3
     OUT_CHANNELS: 29
     FEATURE_SIZE: 72
@@ -89,8 +89,8 @@ INFERENCE:
   TRANSFORMS:
     - NAME: Resize
       PARAMS:
-        height: 1024
-        width: 1024
+        height: 2048
+        width: 2048
 
 WANDB:
   PROJECT_NAME: "semantic-segmentation"
