@@ -19,15 +19,12 @@ TRAIN: &train_settings
   RANDOM_SEED: 21 # 랜덤 시드
   FP16: True # FP16 사용 여부
   OUTPUT_DIR: "./train"
-  CSV_NAME: "validation_EffiSegNet_DiceFocalLoss_output.csv"
+  CSV_NAME: "validation_EffiSegNet_1024_output.csv"
   LOSS:
-    NAME: "DiceFocalLoss"
-    params:
-      lambda_dice: 0.4
-      lambda_focal: 0.6
+    NAME: "BCEWithLogitsLoss"
   OPTIMIZER:
     NAME: "AdamW"
-    WEIGHT_DECAY: 0.001
+    WEIGHT_DECAY: 0.01
   SCHEDULER:
     NAME: "StepLR"
     STEP_SIZE: 100
@@ -36,7 +33,7 @@ TRAIN: &train_settings
 MODEL:
   TYPE: "EffiSegNet"  # 사용할 모델명
   SAVED_DIR: "./saved_model" # 모델 저장 디렉토리
-  MODEL_NAME: "EffiSegNet_DiceFocalLoss_best_model.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
+  MODEL_NAME: "EffiSegNet_1024_best_model.pt" # 모델 이름 (train 시 저장되는 모델 이름, inference 시 불러오는 모델 이름)
   PARAMS:
     IN_CHANNELS: 3
     OUT_CHANNELS: 29
@@ -47,13 +44,13 @@ MODEL:
 
 INFERENCE:
   OUTPUT_DIR: "./inference" # 추론 결과 저장 디렉토리
-  CSV_NAME: "EffiSegNet_DiceFocalLoss_output.csv" # 추론 결과 저장 파일 이름
+  CSV_NAME: "EffiSegNet_1024_output.csv" # 추론 결과 저장 파일 이름
 
 WANDB:
   PROJECT_NAME: "semantic-segmentation"
   ENTITY: "lv2-ss-"
-  RUN_NAME: "31.1_EffiSegNet_DiceFocalLoss" # 실험 이름 바꿔줘요.
-  NOTES: "training EffiSegNet with DiceFocalLoss from monai " # 특이사항 혹은 tag로 설명이 안되면 추가해주시면 됩니다. 
-  TAGS: ["EffiSegNet", "resize:1024", "AdamW", "DiceFocalLoss"]
+  RUN_NAME: "31_EffiSegNet_1024" # 실험 이름 바꿔줘요.
+  NOTES: "" # 특이사항 혹은 tag로 설명이 안되면 추가해주시면 됩니다. 
+  TAGS: ["EffiSegNet", "resize:1024", "AdamW"]
   CONFIGS: *train_settings
   WATCH_STEP: 5 # 5 epoch마다 wandb에 gradients/parameters 시각화

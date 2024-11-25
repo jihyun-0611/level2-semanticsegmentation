@@ -10,13 +10,6 @@ from monai.networks.nets import EfficientNetBNFeatures
 from monai.networks.nets.efficientnet import get_efficientnet_image_size
 from models.base_model import BaseModel
 
-import math
-import torch
-import torch.nn as nn
-from monai.networks.nets import EfficientNetBNFeatures
-from monai.networks.nets.efficientnet import get_efficientnet_image_size
-from models.base_model import BaseModel
-
 class GhostModule(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=1, ratio=2, dw_size=3, stride=1, relu=True):
         super().__init__()
@@ -50,8 +43,8 @@ class EffiSegNet(BaseModel):
         params = config.MODEL.PARAMS
         self.input_channels = params.IN_CHANNELS
         self.output_channels = params.OUT_CHANNELS
-        self.starting_filters = 64  # Could be added to config if needed
-        self.model_name = "efficientnet-b0"  # Could be added to config if needed
+        self.starting_filters = params.STARTING_FILTERS
+        self.model_name = params.BACKBONE
         
         # Initialize encoder
         self.encoder = EfficientNetBNFeatures(
@@ -64,13 +57,20 @@ class EffiSegNet(BaseModel):
         del self.encoder._dropout
         del self.encoder._fc
 
-        # Get channel sizes based on model version
-        b = int(self.model_name[-1])
-        num_channels_per_output = [
-            (16, 24, 40, 112, 320),
-            (16, 24, 40, 112, 320),
-            (16, 24, 48, 120, 352),
-        ][min(b, 2)]
+        # Channel sizes for different EfficientNet versions
+        self.efficientnet_channels = {
+            'efficientnet-b0': (16, 24, 40, 112, 320),
+            'efficientnet-b1': (16, 24, 40, 112, 320),
+            'efficientnet-b2': (16, 24, 48, 120, 352),
+            'efficientnet-b3': (24, 32, 48, 136, 384),
+            'efficientnet-b4': (24, 32, 56, 160, 448),
+            'efficientnet-b5': (24, 40, 64, 176, 512),
+            'efficientnet-b6': (32, 40, 72, 200, 576),
+            'efficientnet-b7': (32, 48, 80, 224, 640),
+        }
+        
+        # Get channel sizes for the selected model
+        num_channels_per_output = self.efficientnet_channels[self.model_name]
 
         # Initialize decoder components - conv layers and batch norm
         self.conv_layers = nn.ModuleList([
