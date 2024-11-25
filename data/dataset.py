@@ -82,6 +82,10 @@ class XRayDataset(Dataset):
                     np.savez_compressed(image_npy_path, data[0]) 
                     np.savez_compressed(label_npy_path, data[1])  # npy 파일로 저장
 
+        if config.TRAIN.SLIDING_WINDOW:
+            self.filenames = [item for item in filenames for _ in range(9)]
+            self.labelnames = [item for item in filenames for _ in range(9)]
+
     def _create_data(self, image_name, label_name):
         """이미지와 레이블 데이터를 생성해 반환합니다."""
         image_path = os.path.join(self.config.DATA.IMAGE_ROOT, image_name)
@@ -125,6 +129,15 @@ class XRayDataset(Dataset):
             image = result["image"]
             label = result["mask"] if self.is_train else label
 
+        if self.config.TRAIN.SLIDING_WINDOW:
+            window_size = (image.shape[0]) // 2
+            stride = window_size // 2
+            x = ((item % 9) % 3) * stride
+            y = ((item % 9) // 3) * stride
+
+            image = image[y:y + window_size, x:x + window_size, :]
+            label = label[y:y + window_size, x:x + window_size, :]
+
         # channel first 포맷으로 변경
         image = image.transpose(2, 0, 1)
         label = label.transpose(2, 0, 1)
@@ -152,6 +165,9 @@ class XRayInferenceDataset(Dataset):
         self.filenames = _filenames
         self.transforms = transforms
 
+        if self.config.TRAIN.SLIDING_WINDOW:
+            self.filenames = [item for item in _filenames for _ in range(9)]
+
     def __len__(self):
         return len(self.filenames)
     
@@ -166,6 +182,14 @@ class XRayInferenceDataset(Dataset):
             inputs = {"image": image}
             result = self.transforms(**inputs)
             image = result["image"]
+
+        if self.config.TRAIN.SLIDING_WINDOW:
+            window_size = (image.shape[0]) // 2
+            stride = window_size // 2
+            x = ((item % 9) % 3) * stride
+            y = ((item % 9) // 3) * stride
+            image = image[y:y + window_size, x:x + window_size, :]
+
 
         # to tenser will be done later
         image = image.transpose(2, 0, 1)  
