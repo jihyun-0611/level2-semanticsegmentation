@@ -139,7 +139,7 @@ def main():
     model_class = getattr(models, config.MODEL.TYPE)  # models에서 모델 클래스 가져오기
     model = model_class(config).get_model()
     
-    model_path=os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME)
+    model_path=os.path.join(config.MODEL.SAVED_DIR, config.MODEL.MODEL_NAME) # 에러나면 get_model() 이거 빼세요
     print(model_path)
     state_dict = torch.load(model_path)
     state_dict = {key.replace('module.', ''): value for key, value in state_dict.items()}
