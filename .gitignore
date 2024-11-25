@@ -3,4 +3,3 @@ wandb/
 saved_model/
 train/
 soft_ensemble/
-ensemble/
