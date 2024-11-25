@@ -152,6 +152,7 @@ def load_models(cfg, device):
                 with open("error_log.txt", "a") as error_file:
                     error_file.write(f"Error loading model from {path}: {str(e)}\n")
                 print(f"오류 발생: {str(e)}")
+                print("error_log.txt에 오류 정보 저장")
         print()
 
     print(f"모델 총 {model_count}개 불러오기 성공!\n")
