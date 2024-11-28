@@ -86,6 +86,7 @@ MODEL:
 INFERENCE:
   OUTPUT_DIR: "./inference" # 추론 결과 저장 디렉토리
   CSV_NAME: "36_4_SwinUNETR_finetuning_swa.csv" # 추론 결과 저장 파일 이름
+  INFERENCE_SWA: true
   ## Validation 및 inference에 사용할 데이터 증강
   TRANSFORMS:
     - NAME: Resize
