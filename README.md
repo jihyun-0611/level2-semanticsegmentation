@@ -81,8 +81,9 @@ dataset/
             └── image1661144246917.json
 
 ```
-- 데이터셋은 한 사람의 양 손을 촬영한 X-Ray 이미지이며, 하나의 ID에 한 사람에 대한 오른손 및 왼손의 이미지가 들어있습니다. 각 이미지는 의학적으로 분류된 손 뼈 29가지의 클래스를 가지며, 2048x2048 크기의 train 이미지 800장, test 이미지 288장으로 구성됩니다.
-- 또한, 각 ID에 해당하는 사람의 나이, 성별, 체중, 신장에 대한 Mata_data가 xlsx로 주어집니다. 
+데이터셋은 한 사람의 양 손을 촬영한 X-Ray 이미지이며, 하나의 ID에 한 사람에 대한 오른손 및 왼손의 이미지가 들어있습니다. 각 이미지는 의학적으로 분류된 손 뼈 29가지의 클래스를 가지며, 2048x2048 크기의 train 이미지 800장, test 이미지 288장으로 구성됩니다.
+
+또한, 각 ID에 해당하는 사람의 나이, 성별, 체중, 신장에 대한 Mata_data가 xlsx로 주어집니다. 
 
 ### Train json
 
@@ -122,109 +123,66 @@ cd level2-objectdetection-cv-23
 pip install -r requirements.txt
 ```
 
-
 <br />
 
 ## 🎉 Project
-
 ### 1. Structure
-  ```bash
-project
-├── Detectron2
-│   ├── detectron2_inference.py
-│   └── detectron2_train.py
-├── EDA
-│   ├── confusion_matrix_trash.py
-│   └── Stramlit
-│       ├── arial.ttf
-│       ├── EDA_Streamlit.py
-│       ├── EDA_Streamlit.sh
-│       ├── inference_json
-│       │   └── val_split_rand411_pred_latest.json
-│       └── validation_json
-│           └── val_split_random411.json
-├── mmdetection2
-│   ├── mmdetection2_inference.py
-│   ├── mmdetection2_train.py
-│   └── mmdetection2_val.py
-├── mmdetection3
-│   ├── mmdetectionV3_inference.py
-│   ├── mmdetectionV3_train.py
-│   └── mmdetectionV3_val.py
+```bash
+Project
+├── base_config.yaml
+├── config
+│   ├── config.py
+├── data
+│   ├── augmentation.py
+│   └── dataset.py
+├── eda_and_visualization
+│   ├── confusion_matrix.py
+│   ├── EDA.ipynb
+│   └── visualize_csv.ipynb
+├── ensemble.py
+├── ensembles
+│   ├── hard_voting.py
+│   ├── __init__.py
+│   └── soft_voting.py
+├── error_analysis
+│   ├── analysis_from_wandb.ipynb
+│   ├── analysis_smp_encoder_decoder.ipynb
+│   ├── confusion_matrix.py
+│   ├── error_analysis.py
+│   └── evaluation.py
+├── experiments
+│   ├── completed
+│   │   ├── 10_completed_resnext101_32x8d.yaml
+│   │   ├── .....
+│   ├── ensemble.yaml
+│   ├── README.md
+├── inference.py
+├── inference.sh
+├── mmsegmentation
+├── models
+│   ├── base_model.py
+│   ├── DeepLabV3Plus.py
+│   ├── ....
+├── multi_inference.sh
+├── multi_train.sh
 ├── README.md
 ├── requirements.txt
-└── src
-    ├── ensemble.py
-    └── make_val_dataset.ipynb
+├── train.py
+├── train.sh
+└── utils
+    ├── convert_format.py
+    ├── download_artifacts.py
+    ├── loss.py
+    ├── metrics.py
+    ├── optimizer.py
+    ├── scheduler.py
+    └── utils.py
 ```
-### 2. EDA
-#### 2-1. Streamlit
-Train data 및 inference 결과의 EDA을 위해 Streamlit을 활용했습니다. Streamlit을 통해 EDA를 진행하기 위해 다음을 실행하세요.
-```bash
-bash EDA_Streamlit.sh
-```
-실행을 위해 다음의 인자가 필요합니다.
+### 2. Train & Inference
+이번 대회에서는 실험 구현, 공유, 그리고 재현성을 높이기 위해 YAML 파일을 활용하여 실험 파라미터 설정 및 관리하는 방식을 도입했습니다. 우리가 사용한 기본 설정 파일은 [base_config.yaml](https://github.com/boostcampaitech7/level2-cv-semanticsegmentation-cv-04-lv3/blob/main/base_config.yaml)에서 확인할 수 있습니다. 실제 실험에 사용된 YAML 파일들은 [여기](https://github.com/boostcampaitech7/level2-cv-semanticsegmentation-cv-04-lv3/tree/main/experiments/completed)에서 확인 가능합니다. 또한, 우리의 YAML 파일 작성 규칙은 [이곳](https://github.com/boostcampaitech7/level2-cv-semanticsegmentation-cv-04-lv3/tree/main/experiments)에서 자세히 확인할 수 있습니다.
 
-  - **dataset_path** : dataset 경로
-  - **font_path** : bbox의 시각화를 위한 font 경로 (우리의 Repository에 있는 arial.ttf을 이용하세요)
-  - **inference_path** : inference json 파일 경로
-  - **validation_path** : validation json 파일 경로
-  
-데모 실행을 위해 validation_json, inference_json directory에 데모 json 파일이 있습니다.
+또한, 다양한 모델과 커스텀 모델을 사용했습니다. 모델 작성 규칙은 [다음](https://github.com/boostcampaitech7/level2-cv-semanticsegmentation-cv-04-lv3/tree/main/models)에서 확인할 수 있습니다.
 
-#### 2-2. confusion_matrix
-Confusion matrix를 시각화하기 위해 confusion_matrix_trash.py 코드를 추가하였습니다.
-
-해당 코드는 validation inference 시 confusion matrix도 함께 출력하기 위한 코드로 직접 실행하지 않고 val.py에서 import해 사용합니다. mmdetectionv2_val.py에서 confusion matrix를 출력하는 코드를 확인하실 수 있습니다.
-
-mmdetectionv2_val.py를 실행하면 추론 결과를 담은 json 파일, confusion_matrix를 위한 pickel파일, confusion_matrix png파일이 함께 저장됩니다.
-        
-### 3. Train and inference
-프로젝트를 위해 mmdetection V2 및 V3, Detectron2를 사용했습니다. 각 라이브러리에 해당하는 directory에 train과 inference를 위한 코드가 있습니다.
-
-해당 코드들을 사용하기 위해 mmdetection 및 Detectron2 라이브러리에 포함된 config 파일이 필요합니다. 밑의 링크들을 통해 config 파일과 그에 필요한 구성 요소들을 clone할 수 있습니다.
-  
-- [mmdetection](https://github.com/open-mmlab/mmdetection) 
-- [Detectron2](https://github.com/facebookresearch/detectron2)
-
-[라이브러리명]_val.py 파일은 Streamlit 시각화를 위해 validation inference 결과에 대한 json 파일을 추출하는 코드입니다. Detectron2의 경우 detectron2_inference.py를 통해 json 파일을 추출할 수 있습니다. 
-<br />
-
-### 4. ensemble
-앙상블을 사용하기 위해 다음을 실행하세요.
-```bash
-python ./src/ensemble.py
-```
-
-아래 변수 값을 수정하여 csv 파일 및 json 저장경로를 지정할 수 있습니다.
-```python
-root = ['*.csv',] # 앙상블을 진행할 csv 파일을 지정합니다.
-submission_dir = '../../submission/' # csv 파일이 저장된 경로 및 앙상블 후 저장할 경로를 지정합니다.
-annotation = '../../dataset/test.json' # 앙상블에 사용하기 위해 file의 image 정보가 포함된 json 파일 경로를 지정합니다.
-```
-
-아래 변수 값을 수정하여 앙상블 기법 및 수치를 지정할 수 있습니다.
-```python
-ensemble_type = '' #[nms, wbf, nmw, soft-nms] 중 사용할 앙상블 기법을 선택합니다. 
-iou_thr = 0.5 #iou threshold 값을 설정합니다.
-
-# WBF 기법 설정 값
-wbf_conf_type='avg' # ['avg', 'max', 'box_and_model_avg', 'absent_model_aware_avg'] # WBF 기법 수행 시 신뢰도 계산 방법을 설정 값입니다.
-wbf_allows_overflow = False # {True: 가중치 합 > 1, False: 가중치 합 1로 고정} # 가중치 합을 1을 초과하거나 1로 고정 하는 설정 값입니다.
-wbf_skip_box_thr = 0.0 # 값에 해당하는 정확도가 넘지 않으면 제외하는 설정 값입니다.
-
-# Soft-NMS 기법 설정 값
-method = 2 # 1 - linear soft-NMS, 2 - gaussian soft-NMS, 3 - standard NMS 기본값: 2  # Soft-NMS의 방식을 선택하는 설정 값입니다.
-sn_sigma = 0.5 # Gaussian soft-NMS 방식 사용 시 분산을 설정하는 값입니다. 
-sn_thresh = 0.001 # 값에 해당하는 신뢰도 미만의 Box를 제거하는 설정 값입니다.
-
-
-weights = [1] * len(submission_df) # 각 모델의 동일한 가중치 1을 고정하는 설정 값입니다. None으로 설정 시 각 모델에 적용된 가중치로 진행됩니다. 
-
-```
-
-해당 코드들은 Weighted-Boxes-Fusion GitHub 내 ensemble_boxes 라이브러리가 포함되어 있습니다.
-- [Weighted-Boxes-Fusion](https://github.com/ZFTurbo/Weighted-Boxes-Fusion)  
 
 ## 🧑‍🤝‍🧑 Contributors
 <div align="center">
@@ -240,9 +198,11 @@ weights = [1] * len(submission_df) # 각 모델의 동일한 가중치 1을 고�
     </td>
         <td align="center"><a href="https://github.com/myooooon"><img src="https://avatars.githubusercontent.com/u/168439685?v=4" width="100px;" alt=""/><br /><sub><b>김윤서</b></sub><br />
     </td>
+        <td align="center"><a href="https://github.com/cherry-space"><img src="https://avatars.githubusercontent.com/u/177336350?v=4" width="100px;" alt=""/><br /><sub><b>김채리</b></sub><br />
   </tr>
 </table>
 </div>
 
 ## ⚡️ Detail   
-프로젝트에 대한 자세한 내용은 [Wrap-Up Report](https://github.com/boostcampaitech7/level2-objectdetection-cv-23/blob/main/docs/CV_23_WrapUp_Report_detection.pdf) 에서 확인할 수 있습니다.
+우리는 해당 대회를 위해 다양한 모델과 방법론을 적용하였으며, 이에 대한 자세한 내용은 [Wrap-Up Report](https://github.com/boostcampaitech7/level2-cv-semanticsegmentation-cv-04-lv3/blob/main/docs/SemanticSeg_CV_%ED%8C%80%20%EB%A6%AC%ED%8F%AC%ED%8A%B8(04%EC%A1%B0).pdf)에서 확인하실 수 있습니다.
+
