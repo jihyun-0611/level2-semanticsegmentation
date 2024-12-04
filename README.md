@@ -32,18 +32,6 @@ Bone Image Segmentation은 인공지능 분야에서 중요한 응용 분야 중
 
 <img src="https://github.com/user-attachments/assets/7d17ba49-be2f-4bd2-8a08-42f7f0302ddc" width="500"/>
 
-## 🕵️ 프로젝트 파이프라인 
-
-<img src="https://github.com/user-attachments/assets/5300dad3-8e0f-4927-ade9-241b01771e6d" width="500"/>
-
-각 파이프라인에 대한 상세한 내용은 아래 링크를 통해 확인할 수 있습니다.
-
-- [MLFlow 및 Wandb 연동](https://shadowed-fact-f9b.notion.site/Wandb-with-mmdection-train-8854fc9596a743ebb7ecdbb894dbd807?pvs=4)
-- [데이터 EDA 및 Streamlit 시각화](https://shadowed-fact-f9b.notion.site/EDA-Streamlit-bd10bb80c7704431b27c05929899bc4e?pvs=4)
-- [Validation 전략 구축](https://shadowed-fact-f9b.notion.site/Validation-d56cc4f852334249905ef1c99b05133d?pvs=4)
-- [모델 실험 및 평가](https://shadowed-fact-f9b.notion.site/4287a4ea70f145739bf45738ae35051d?pvs=4)
-- [모델 앙상블 실험](https://shadowed-fact-f9b.notion.site/ensemble-ca0522e34a544108a8f2b1ff66ca7ed3?pvs=4)
-
 <br />
 
 ## 🥈 Result
@@ -94,7 +82,7 @@ Train json 파일은 각 이미지에 대한 annotations이 포함되며, id, ty
         "id": "id", 
         "type": "poly_seg", 
         "attributes": {}, 
-        "points": [[[10, 20], [30, 40,] ... ]], 
+        "points": [[[10, 20], [30, 40], ... ]], 
         "label": "finger-1"} 
         ...]}
   ```
