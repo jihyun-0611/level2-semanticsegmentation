@@ -107,7 +107,7 @@ PyTorch 2.1.0을 설치합니다. 설치 방법은 [PyTorch 공식 웹사이트]
 
 ```bash
 git clone https://github.com/boostcampaitech7/level2-cv-semanticsegmentation-cv-04-lv3.git
-cd level2-objectdetection-cv-23
+cd level2-cv-semanticsegmentation-cv-04-lv3
 pip install -r requirements.txt
 ```
 
