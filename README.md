@@ -94,7 +94,7 @@ Train json 파일은 각 이미지에 대한 annotations이 포함되며, id, ty
 ### env.
 이 프로젝트는 Ubuntu 20.04.6 LTS, CUDA Version: 12.2, Tesla v100 32GB의 환경에서 훈련 및 테스트되었습니다.
 
-### Installment
+### Installation
 이 프로젝트에서는 다양한 라이브러리가 필요합니다. 아래 단계를 따라 필요한 라이브러리를 설치하세요.
 
 #### 1. PyTorch 설치
