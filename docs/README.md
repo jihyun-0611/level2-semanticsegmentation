@@ -14,6 +14,7 @@
 ### 1. 모델 실험
 
 - **EffiSegNet 기반 실험**
+  - [model](https://github.com/jihyun-0611/level2-semanticsegmentation/blob/main/models/EffiSegNet.py) | [experiments](https://github.com/jihyun-0611/level2-semanticsegmentation/blob/main/experiments/completed/31.6_EffiSegNet_b7_BCE.yaml)
   - EfficientNet을 인코더로 사용하고 SegNet 구조를 디코더로 적용한 **EffiSegNet**을 실험.
   - 구조가 단순하여 학습 속도가 빠르기 때문에 다양한 실험이 가능했고, 기존 Medical Segmentation에서 SOTA 2위 수준의 성능을 가지고 있었음.
   - 결과
@@ -22,6 +23,7 @@
     - DiceFocalLoss 사용 시 작은 객체 성능이 불안정해졌고, BCEWithLogitsLoss를 사용할 때 비교적 더 안정적인 결과.
     - 디코더가 nearest neighbor 업샘플링 후 단순 덧셈으로 특징을 결합하는 방식으로 설계되어 인코더 모델 크기를 키워도 작은 객체나 세부 구조 복원에는 한계가 있음.
 - **SwinUNETR 기반 실험**
+  - [model](https://github.com/jihyun-0611/level2-semanticsegmentation/blob/main/models/SwinUNETR.py) | [experiments](https://github.com/jihyun-0611/level2-semanticsegmentation/blob/main/experiments/completed/36.4_Finetune_SwinUNETR_slidingwindow.yaml)
   - EffiSegNet 기반 실험에서 작은 객체, 다중 클래스 구간에서 정보 손실이 발생하는 문제를 확인.
   - Swin Transformer 기반 인코더와 점진적으로 해상도를 복원하는 디코더를 가진 **SwinUNETR** 모델로 세부 특징 보존 및 전역적 관계 파악을 강화하고자 함.
   - Sliding Window를 활용한 고해상도 이미지 학습(2048x2048)으로 다중 클래스가 겹치는 픽셀 처리를 개선하는 것을 목표로 함.
