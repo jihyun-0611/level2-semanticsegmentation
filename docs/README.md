@@ -18,6 +18,7 @@
   - EfficientNet을 인코더로 사용하고 SegNet 구조를 디코더로 적용한 **EffiSegNet**을 실험.
   - 구조가 단순하여 학습 속도가 빠르기 때문에 다양한 실험이 가능했고, 기존 Medical Segmentation에서 SOTA 2위 수준의 성능을 가지고 있었음.
   - 결과
+    - Dice Score : 0.9628
     - 전체적으로 빠르고 안정적인 학습이 가능했고, 주요 클래스에 대해 준수한 Dice Score를 기록(최대 0.96921).
     - 다만, Pisiform 등 작은 객체나 클래스 중첩이 있는 영역에서는 Dice Score 하락 및 예측 편차가 크게 나타남.
     - DiceFocalLoss 사용 시 작은 객체 성능이 불안정해졌고, BCEWithLogitsLoss를 사용할 때 비교적 더 안정적인 결과.
@@ -28,6 +29,7 @@
   - Swin Transformer 기반 인코더와 점진적으로 해상도를 복원하는 디코더를 가진 **SwinUNETR** 모델로 세부 특징 보존 및 전역적 관계 파악을 강화하고자 함.
   - Sliding Window를 활용한 고해상도 이미지 학습(2048x2048)으로 다중 클래스가 겹치는 픽셀 처리를 개선하는 것을 목표로 함.
   - 결과
+    - Dice Score : 0.9716
     - 작은 뼈 구조(Pisiform 등)에서 Dice Score 향상 확인
     - 다중 클래스 중첩 구간에서 예측 안정성 개선
     - 경계 오류율(Boundary Error Rate) 감소
